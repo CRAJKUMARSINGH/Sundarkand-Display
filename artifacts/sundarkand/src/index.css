@@ -438,6 +438,8 @@
 .tp-btn  { font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif; font-size: 0.82rem; padding: 0.35rem 0.9rem; border-radius: 4px; border: 1px solid #C4890A; cursor: pointer; transition: all 0.15s ease; font-weight: 600; letter-spacing: 0.03em; }
 .tp-btn--reset      { background: rgba(90,30,0,0.6); color: #F5E6A3; }
 .tp-btn--reset:hover { background: rgba(90,30,0,0.9); color: #D4A017; }
+.tp-btn--nav        { background: rgba(60,20,0,0.7); color: #D4A017; border-color: #8B5E0A; min-width: 5rem; }
+.tp-btn--nav:hover  { background: rgba(90,30,0,0.9); color: #F5E6A3; border-color: #C4890A; }
 .tp-btn--play       { background: linear-gradient(135deg, #C04B00, #FF6B00); color: #FFF8EC; border-color: #FF6B00; padding: 0.35rem 1.4rem; font-size: 0.9rem; }
 .tp-btn--play:hover { background: linear-gradient(135deg, #FF6B00, #D4A017); box-shadow: 0 2px 10px rgba(255,107,0,0.4); }
 

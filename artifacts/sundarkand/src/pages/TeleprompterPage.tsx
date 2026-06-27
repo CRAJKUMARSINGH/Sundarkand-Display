@@ -30,7 +30,7 @@ function SundarkandBody({ body }: { body: Extract<PartBody, { kind: "sundarkand"
     <>
       <div className="tp-divider">❧ ❧ ❧</div>
       {body.sections.map((section, si) => (
-        <div key={si} className="tp-section">
+        <div key={si} data-section id={`doha-${section.doha.number}`} className="tp-section">
           <div className="tp-chaupais">
             {section.chaupaiPlaceholders.map((text, ci) => (
               <div key={ci} className="tp-chaupai">{text}</div>
@@ -58,7 +58,7 @@ function ChalisaBody({ body }: { body: Extract<PartBody, { kind: "chalisa" }> })
       {body.verses.map((v, i) => {
         const isDoha = v.startsWith("दोहा");
         return (
-          <div key={i} className={isDoha ? "tp-doha-block tp-doha-block--chalisa" : "tp-chaupai"}>
+          <div key={i} data-section className={isDoha ? "tp-doha-block tp-doha-block--chalisa" : "tp-chaupai"}>
             {isDoha
               ? <div className="tp-doha-block__text">{v}</div>
               : v}
@@ -76,7 +76,7 @@ function AartiBody({ body, title }: { body: Extract<PartBody, { kind: "aarti" }>
   return (
     <div className="tp-aarti-verses">
       {body.verses.map((v, i) => (
-        <div key={i} className="tp-aarti-verse">{v}</div>
+        <div key={i} data-section className="tp-aarti-verse">{v}</div>
       ))}
       <div className="tp-samapti__jay" style={{ marginTop: "2rem" }}>
         ॥ {title} समाप्त ॥
@@ -89,7 +89,7 @@ function BajrangBody({ body }: { body: Extract<PartBody, { kind: "bajrangbaan" }
   return (
     <div className="tp-bajrang-body">
       {body.sections.map((sec, si) => (
-        <div key={si} className="tp-bajrang-section">
+        <div key={si} data-section className="tp-bajrang-section">
           <div className="tp-bajrang-label">॥ {sec.label} ॥</div>
           {sec.verses.map((v, vi) => (
             <div key={vi} className="tp-chaupai">{v}</div>
@@ -222,6 +222,43 @@ export default function TeleprompterPage() {
       el.removeEventListener("wheel",     syncFromScroll);
       el.removeEventListener("touchmove", syncFromScroll);
     };
+  }, []);
+
+  const jumpToSection = useCallback((delta: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const sections = Array.from(el.querySelectorAll<HTMLElement>("[data-section]"));
+    if (!sections.length) return;
+
+    const scrollTop = el.scrollTop;
+    const pad = 60;
+
+    let curIdx = 0;
+    for (let i = 0; i < sections.length; i++) {
+      if (sections[i].offsetTop <= scrollTop + pad) curIdx = i;
+      else break;
+    }
+
+    const targetIdx = Math.max(0, Math.min(sections.length - 1, curIdx + delta));
+    const targetEl  = sections[targetIdx];
+    const newTop    = Math.max(0, targetEl.offsetTop - 20);
+
+    manualScrollRef.current = true;
+    if (manualTimerRef.current) clearTimeout(manualTimerRef.current);
+
+    el.scrollTo({ top: newTop, behavior: "smooth" });
+
+    manualTimerRef.current = setTimeout(() => {
+      manualScrollRef.current = false;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll <= 0) return;
+      const newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+      posAtPauseRef.current = newPos;
+      positionRef.current   = newPos;
+      setPosition(newPos);
+      if (startTimeRef.current !== null) startTimeRef.current = performance.now();
+    }, 600);
   }, []);
 
   const handlePlayPause = () => setPlaying(p => !p);
@@ -429,6 +466,7 @@ export default function TeleprompterPage() {
 
         <div className="tp-btns">
           <button className="tp-btn tp-btn--reset" onClick={handleReset}>⏮ आरंभ</button>
+          <button className="tp-btn tp-btn--nav" onClick={() => jumpToSection(-1)} title="पिछला दोहा">◀ पिछला</button>
           <button
             className="tp-btn tp-btn--play"
             onClick={handlePlayPause}
@@ -436,6 +474,7 @@ export default function TeleprompterPage() {
           >
             {playing ? "⏸ विराम" : position > 0 ? "▶ जारी रखें" : "▶ प्रारंभ"}
           </button>
+          <button className="tp-btn tp-btn--nav" onClick={() => jumpToSection(1)} title="अगला दोहा">अगला ▶</button>
           <div className="tp-speed">
             <span className="tp-speed__label">गति:</span>
             {[0.5, 0.75, 1, 1.25, 1.5].map(s => (
