@@ -327,6 +327,148 @@
  * Even without handling focused or not, this is six possible combinations that
  * need to be distinguished from eachother visually.
  */
+/* ═══════════════════════════════════════════════════════════
+   SUNDARKAND TELEPROMPTER — Custom CSS
+   ═══════════════════════════════════════════════════════════ */;
+
+.tp-root {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.18) 0%, transparent 60%),
+    linear-gradient(180deg, #1A0A00 0%, #2C1000 100%);
+  color: #FFF8EC;
+  font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif;
+  overflow: hidden;
+}
+
+.tp-border {
+  background: linear-gradient(135deg, #3A1200 0%, #5C1E00 50%, #3A1200 100%);
+  border: 3px solid #C4890A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.55rem 1.2rem;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.tp-border::before,
+.tp-border::after { content: "🪔"; font-size: 0.9rem; opacity: 0.7; flex-shrink: 0; }
+.tp-border--top    { border-top: none; border-left: none; border-right: none; box-shadow: 0 3px 12px rgba(212,160,23,0.25); flex-wrap: wrap; min-height: 3.2rem; }
+.tp-border--bottom { border-bottom: none; border-left: none; border-right: none; box-shadow: 0 -3px 12px rgba(212,160,23,0.25); flex-wrap: wrap; min-height: 3.2rem; }
+.tp-border__num    { font-size: 0.78rem; font-weight: 700; color: #D4A017; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; }
+.tp-border__text   { font-size: 0.8rem; color: #F5E6A3; line-height: 1.5; text-align: center; font-style: italic; }
+.tp-border--side   { width: 5.5rem; min-width: 5.5rem; border-top: none; border-bottom: none; flex-direction: column; padding: 0.5rem 0.4rem; overflow: hidden; align-items: center; justify-content: flex-start; gap: 0.4rem; writing-mode: vertical-rl; flex-shrink: 0; }
+.tp-border--left   { border-left: none; box-shadow: 3px 0 12px rgba(212,160,23,0.15); text-orientation: mixed; transform: rotate(180deg); }
+.tp-border--right  { border-right: none; box-shadow: -3px 0 12px rgba(212,160,23,0.15); text-orientation: mixed; }
+.tp-border__side-inner { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; width: 100%; }
+.tp-border__num--vert  { font-size: 0.68rem; font-weight: 700; color: #D4A017; white-space: nowrap; margin-bottom: 0.3rem; letter-spacing: 0.04em; }
+.tp-border__text--vert { font-size: 0.65rem; color: #F5E6A3; font-style: italic; line-height: 1.4; text-align: center; white-space: normal; overflow: hidden; }
+
+.tp-middle { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+
+.tp-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: auto;
+  background:
+    radial-gradient(ellipse at 50% 5%, rgba(212,160,23,0.08) 0%, transparent 55%),
+    linear-gradient(180deg, #1A0600 0%, #200900 100%);
+}
+.tp-scroll::-webkit-scrollbar        { width: 6px; }
+.tp-scroll::-webkit-scrollbar-track  { background: #1A0600; }
+.tp-scroll::-webkit-scrollbar-thumb  { background: #C4890A; border-radius: 3px; }
+
+.tp-content { max-width: 660px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+.tp-mangal              { text-align: center; margin-bottom: 2.5rem; }
+.tp-mangal__ganesh      { font-size: 1rem; color: #D4A017; letter-spacing: 0.12em; margin-bottom: 0.5rem; }
+.tp-mangal__subtitle    { font-size: 1rem; color: #F5E6A3; margin-bottom: 0.2rem; letter-spacing: 0.06em; }
+.tp-mangal__kand        { font-size: 1.4rem; font-weight: 700; color: #FF6B00; letter-spacing: 0.15em; margin-top: 0.6rem; text-shadow: 0 2px 6px rgba(255,107,0,0.35); }
+
+.tp-divider { text-align: center; color: #D4A017; font-size: 1.1rem; margin: 1.5rem 0 2rem; opacity: 0.6; letter-spacing: 0.5em; }
+.tp-section { margin-bottom: 2.8rem; }
+.tp-chaupais { display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 1.2rem; }
+.tp-chaupai  { font-size: 1.15rem; line-height: 2; color: #FFF8EC; text-align: center; padding: 0.3rem 0; letter-spacing: 0.01em; }
+
+.tp-doha-block          { border-top: 1px solid rgba(196,137,10,0.35); border-bottom: 1px solid rgba(196,137,10,0.35); padding: 1rem 1.2rem; margin: 0.5rem 0; background: rgba(90,30,0,0.25); border-radius: 4px; text-align: center; }
+.tp-doha-block__label   { font-size: 0.8rem; color: #D4A017; letter-spacing: 0.12em; margin-bottom: 0.5rem; font-weight: 700; }
+.tp-doha-block__text    { font-size: 1.05rem; line-height: 1.9; color: #F5E6A3; font-style: italic; }
+.tp-doha-block--chalisa { margin: 1rem 0; }
+
+.tp-samapti         { text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 2px solid #C4890A; }
+.tp-samapti__line   { font-size: 1rem; color: #F5E6A3; line-height: 1.9; font-style: italic; }
+.tp-samapti__sub    { font-size: 1.3rem; font-weight: 700; color: #D4A017; margin: 1rem 0 0.5rem; letter-spacing: 0.1em; }
+.tp-samapti__jay    { font-size: 1.5rem; color: #FF6B00; font-weight: 700; letter-spacing: 0.15em; margin-top: 1rem; text-shadow: 0 2px 8px rgba(255,107,0,0.4); }
+.tp-samapti--final  { border-top: 2px solid #C4890A; margin-top: 3rem; padding: 2.5rem 1rem; }
+
+.tp-chalisa-verses, .tp-aarti-verses, .tp-bajrang-body { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+.tp-aarti-verse    { font-size: 1.1rem; line-height: 2; color: #FFF8EC; text-align: center; padding: 0.4rem 0; }
+.tp-bajrang-section { margin-bottom: 1.5rem; }
+.tp-bajrang-label  { font-size: 0.78rem; font-weight: 700; color: #FF5252; letter-spacing: 0.12em; margin-bottom: 0.6rem; text-align: center; }
+
+.tp-part__header { display: flex; align-items: center; gap: 1rem; padding: 1.2rem 1.5rem; margin: 3rem 0 1.5rem; border-left: 4px solid #FF6B00; background: rgba(255,255,255,0.03); border-radius: 0 6px 6px 0; }
+.tp-part__badge  { width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+.tp-part__info   { display: flex; flex-direction: column; gap: 0.15rem; }
+.tp-part__title  { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.06em; }
+.tp-part__meta   { font-size: 0.72rem; color: #D4A017; opacity: 0.7; letter-spacing: 0.04em; }
+.tp-part-sep     { text-align: center; margin: 3rem 0 0; padding: 1.2rem; border-top: 1px dashed rgba(196,137,10,0.3); font-size: 0.9rem; letter-spacing: 0.12em; opacity: 0.75; }
+
+.tp-controls { background: linear-gradient(180deg, #1A0600 0%, #0D0300 100%); border-top: 2px solid #C4890A; padding: 0.5rem 1rem 0.6rem; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+
+.tp-timer           { display: flex; align-items: baseline; gap: 0.4rem; justify-content: center; font-size: 0.85rem; flex-wrap: wrap; }
+.tp-timer__elapsed  { color: #FF6B00; font-weight: 700; font-family: "Courier New", monospace; font-size: 1.05rem; }
+.tp-timer__sep      { color: #D4A017; opacity: 0.5; }
+.tp-timer__total    { color: #F5E6A3; font-family: "Courier New", monospace; }
+.tp-timer__divider  { color: rgba(196,137,10,0.3); margin: 0 0.3rem; }
+.tp-timer__label    { font-size: 0.7rem; color: #D4A017; opacity: 0.6; }
+.tp-timer__part     { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; opacity: 0.9; }
+.tp-dir-arrow       { font-size: 1rem; font-weight: 700; margin-right: 0.2rem; transition: transform 0.4s ease; }
+
+.tp-progress-seg          { display: flex; height: 5px; gap: 2px; border-radius: 3px; overflow: hidden; }
+.tp-progress-seg__track   { background: rgba(196,137,10,0.15); border-radius: 2px; overflow: hidden; min-width: 2px; }
+.tp-progress-seg__fill    { height: 100%; border-radius: 2px; transition: width 0.5s linear; }
+
+.tp-btns { display: flex; align-items: center; justify-content: center; gap: 0.7rem; flex-wrap: wrap; }
+.tp-btn  { font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif; font-size: 0.82rem; padding: 0.35rem 0.9rem; border-radius: 4px; border: 1px solid #C4890A; cursor: pointer; transition: all 0.15s ease; font-weight: 600; letter-spacing: 0.03em; }
+.tp-btn--reset      { background: rgba(90,30,0,0.6); color: #F5E6A3; }
+.tp-btn--reset:hover { background: rgba(90,30,0,0.9); color: #D4A017; }
+.tp-btn--play       { background: linear-gradient(135deg, #C04B00, #FF6B00); color: #FFF8EC; border-color: #FF6B00; padding: 0.35rem 1.4rem; font-size: 0.9rem; }
+.tp-btn--play:hover { background: linear-gradient(135deg, #FF6B00, #D4A017); box-shadow: 0 2px 10px rgba(255,107,0,0.4); }
+
+.tp-speed          { display: flex; align-items: center; gap: 0.3rem; }
+.tp-speed__label   { font-size: 0.75rem; color: #D4A017; margin-right: 0.2rem; }
+.tp-speed__btn     { font-family: "Courier New", monospace; font-size: 0.72rem; padding: 0.22rem 0.45rem; border-radius: 3px; border: 1px solid rgba(196,137,10,0.4); background: rgba(90,30,0,0.4); color: #F5E6A3; cursor: pointer; transition: all 0.15s; }
+.tp-speed__btn:hover        { border-color: #D4A017; color: #D4A017; }
+.tp-speed__btn--active      { background: #7B1A1A; border-color: #FF6B00; color: #FF6B00; font-weight: 700; }
+
+.tp-part-tracker { display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex-wrap: wrap; padding-bottom: 0.2rem; }
+.tp-part-pill    { font-size: 0.68rem; padding: 0.18rem 0.6rem; border-radius: 20px; border: 1px solid rgba(196,137,10,0.3); color: rgba(245,230,163,0.45); display: flex; align-items: center; gap: 0.3rem; letter-spacing: 0.02em; transition: all 0.3s ease; }
+.tp-part-pill--active { border-width: 1.5px; color: inherit; background: rgba(255,255,255,0.05); font-weight: 700; }
+.tp-part-pill__dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; animation: tp-pulse 1.5s ease-in-out infinite; }
+@keyframes tp-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
+
+.tp-dir-badge       { font-size: 0.68rem; font-weight: 700; padding: 0.18rem 0.6rem; border-radius: 20px; background: rgba(255,255,255,0.06); border: 1px solid currentColor; letter-spacing: 0.04em; animation: tp-dirpulse 2s ease-in-out infinite; }
+.tp-dir-badge__pass { opacity: 0.6; font-weight: 400; }
+@keyframes tp-dirpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
+
+@media (max-width: 600px) {
+  .tp-border--side       { width: 3.5rem; min-width: 3.5rem; }
+  .tp-border__text--vert { display: none; }
+  .tp-content            { padding: 2rem 1rem 5rem; }
+  .tp-chaupai            { font-size: 1rem; }
+  .tp-part-pill          { font-size: 0.6rem; padding: 0.12rem 0.4rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   END SUNDARKAND TELEPROMPTER CSS
+   ═══════════════════════════════════════════════════════════ */
+
 @layer utilities {
 
   /* Hide ugly search cancel button in Chrome until we can style it properly */
