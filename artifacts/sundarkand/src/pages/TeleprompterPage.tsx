@@ -127,9 +127,9 @@ export default function TeleprompterPage() {
   const [playing,   setPlaying]   = useState(false);
   const [position,  setPosition]  = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [speed,     setSpeed]     = useState(1);
-  const [borderIdx, setBorderIdx] = useState(0);
-  const [passCount, setPassCount] = useState(0);
+  const [speed,          setSpeed]         = useState(1);
+  const [currentDohaNum, setCurrentDohaNum] = useState(1);
+  const [passCount,      setPassCount]      = useState(0);
 
   speedRef.current    = speed;
   positionRef.current = position;
@@ -140,10 +140,22 @@ export default function TeleprompterPage() {
   const partElap  = Math.min(position - partStart, activePt.durationSec * 1000);
 
   useEffect(() => {
-    if (!playing || activeIdx !== 0) return;
-    const id = setInterval(() => setBorderIdx(i => (i + 1) % borderDohas.length), 30_000);
-    return () => clearInterval(id);
-  }, [playing, activeIdx]);
+    const el = scrollRef.current;
+    if (!el) return;
+    const updateDoha = () => {
+      const secs = Array.from(el.querySelectorAll<HTMLElement>('[id^="doha-"]'));
+      if (!secs.length) return;
+      const top = el.scrollTop + 80;
+      let num = 1;
+      for (const s of secs) {
+        if (s.offsetTop <= top) { const n = parseInt(s.id.replace("doha-", "")); if (!isNaN(n)) num = n; }
+        else break;
+      }
+      setCurrentDohaNum(num);
+    };
+    el.addEventListener("scroll", updateDoha, { passive: true });
+    return () => el.removeEventListener("scroll", updateDoha);
+  }, []);
 
   const animate = useCallback(() => {
     if (startTimeRef.current === null) return;
@@ -285,14 +297,16 @@ export default function TeleprompterPage() {
     speedRef.current = s;
   };
 
-  const doha      = borderDohas[borderIdx];
-  const dohaLines = doha.text.split(",").map(s => s.trim());
+  const sundarkandSections = parts[0].body.kind === "sundarkand" ? parts[0].body.sections : [];
+  const currentSection     = sundarkandSections.find(s => s.doha.number === currentDohaNum);
+  const currentDohaText    = currentSection?.doha.text ?? "";
+  const dohaLines          = currentDohaText.split(",").map(s => s.trim());
 
   const borderLabel = activeIdx === 0
-    ? `॥ दोहा ${doha.number} ॥`
+    ? `॥ दोहा ${currentDohaNum} ॥`
     : `॥ ${activePt.title} ॥`;
   const borderText = activeIdx === 0
-    ? doha.text
+    ? currentDohaText
     : activePt.headerLines[0];
 
   const dirArrow = direction === 1 ? "↓" : "↑";
