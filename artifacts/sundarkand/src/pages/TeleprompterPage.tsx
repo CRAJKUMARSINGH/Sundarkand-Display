@@ -114,13 +114,15 @@ function PartContent({ part }: { part: Part }) {
 }
 
 export default function TeleprompterPage() {
-  const scrollRef     = useRef<HTMLDivElement>(null);
-  const startTimeRef  = useRef<number | null>(null);
-  const posAtPauseRef = useRef<number>(0);
-  const rafRef        = useRef<number>(0);
-  const speedRef      = useRef(1);
-  const positionRef   = useRef(0);
-  const dirRef        = useRef<1 | -1>(1);
+  const scrollRef          = useRef<HTMLDivElement>(null);
+  const startTimeRef       = useRef<number | null>(null);
+  const posAtPauseRef      = useRef<number>(0);
+  const rafRef             = useRef<number>(0);
+  const speedRef           = useRef(1);
+  const positionRef        = useRef(0);
+  const dirRef             = useRef<1 | -1>(1);
+  const manualScrollRef    = useRef(false);
+  const manualTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [playing,   setPlaying]   = useState(false);
   const [position,  setPosition]  = useState(0);
@@ -171,7 +173,7 @@ export default function TeleprompterPage() {
     setPosition(next);
 
     const el = scrollRef.current;
-    if (el) {
+    if (el && !manualScrollRef.current) {
       const maxScroll = el.scrollHeight - el.clientHeight;
       el.scrollTop = maxScroll * (next / TOTAL_DURATION_MS);
     }
@@ -192,6 +194,35 @@ export default function TeleprompterPage() {
     }
     return () => cancelAnimationFrame(rafRef.current);
   }, [playing, animate]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const syncFromScroll = () => {
+      manualScrollRef.current = true;
+      if (manualTimerRef.current) clearTimeout(manualTimerRef.current);
+      manualTimerRef.current = setTimeout(() => {
+        manualScrollRef.current = false;
+        const maxScroll = el.scrollHeight - el.clientHeight;
+        if (maxScroll <= 0) return;
+        const newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+        posAtPauseRef.current = newPos;
+        positionRef.current   = newPos;
+        setPosition(newPos);
+        if (startTimeRef.current !== null) {
+          startTimeRef.current = performance.now();
+        }
+      }, 800);
+    };
+
+    el.addEventListener("wheel",      syncFromScroll, { passive: true });
+    el.addEventListener("touchmove",  syncFromScroll, { passive: true });
+    return () => {
+      el.removeEventListener("wheel",     syncFromScroll);
+      el.removeEventListener("touchmove", syncFromScroll);
+    };
+  }, []);
 
   const handlePlayPause = () => setPlaying(p => !p);
 
