@@ -47,7 +47,3 @@ Thumbs.db
 # Replit
 .cache/
 .local/
-
-# Netlify
-netlify/functions/dist/
-.netlify/

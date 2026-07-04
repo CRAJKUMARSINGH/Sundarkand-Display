@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Sundarkand Teleprompter"
+title = "Sundarkand"
 version = "1.0.0"
 id = "artifacts/sundarkand"
 router = "path"

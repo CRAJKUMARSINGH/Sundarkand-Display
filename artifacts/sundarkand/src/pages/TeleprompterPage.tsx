@@ -18,7 +18,6 @@ function formatSec(sec: number) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-/** Determine which part is active at a given elapsed ms */
 function activePart(elapsedMs: number): number {
   for (let i = parts.length - 1; i >= 0; i--) {
     if (elapsedMs >= partOffsets[i]) return i;
@@ -26,13 +25,12 @@ function activePart(elapsedMs: number): number {
   return 0;
 }
 
-// ─── Body renderers ───────────────────────────────────────────
 function SundarkandBody({ body }: { body: Extract<PartBody, { kind: "sundarkand" }> }) {
   return (
     <>
       <div className="tp-divider">❧ ❧ ❧</div>
       {body.sections.map((section, si) => (
-        <div key={si} className="tp-section">
+        <div key={si} data-section id={`doha-${section.doha.number}`} className="tp-section">
           <div className="tp-chaupais">
             {section.chaupaiPlaceholders.map((text, ci) => (
               <div key={ci} className="tp-chaupai">{text}</div>
@@ -60,7 +58,7 @@ function ChalisaBody({ body }: { body: Extract<PartBody, { kind: "chalisa" }> })
       {body.verses.map((v, i) => {
         const isDoha = v.startsWith("दोहा");
         return (
-          <div key={i} className={isDoha ? "tp-doha-block tp-doha-block--chalisa" : "tp-chaupai"}>
+          <div key={i} data-section className={isDoha ? "tp-doha-block tp-doha-block--chalisa" : "tp-chaupai"}>
             {isDoha
               ? <div className="tp-doha-block__text">{v}</div>
               : v}
@@ -78,7 +76,7 @@ function AartiBody({ body, title }: { body: Extract<PartBody, { kind: "aarti" }>
   return (
     <div className="tp-aarti-verses">
       {body.verses.map((v, i) => (
-        <div key={i} className="tp-aarti-verse">{v}</div>
+        <div key={i} data-section className="tp-aarti-verse">{v}</div>
       ))}
       <div className="tp-samapti__jay" style={{ marginTop: "2rem" }}>
         ॥ {title} समाप्त ॥
@@ -91,7 +89,7 @@ function BajrangBody({ body }: { body: Extract<PartBody, { kind: "bajrangbaan" }
   return (
     <div className="tp-bajrang-body">
       {body.sections.map((sec, si) => (
-        <div key={si} className="tp-bajrang-section">
+        <div key={si} data-section className="tp-bajrang-section">
           <div className="tp-bajrang-label">॥ {sec.label} ॥</div>
           {sec.verses.map((v, vi) => (
             <div key={vi} className="tp-chaupai">{v}</div>
@@ -115,24 +113,25 @@ function PartContent({ part }: { part: Part }) {
   }
 }
 
-// ─── Main component ───────────────────────────────────────────
 export default function TeleprompterPage() {
-  const scrollRef     = useRef<HTMLDivElement>(null);
-  const startTimeRef  = useRef<number | null>(null);
-  const posAtPauseRef = useRef<number>(0);   // position (0..TOTAL_DURATION_MS) at last pause/flip
-  const rafRef        = useRef<number>(0);
-  const speedRef      = useRef(1);
-  const positionRef   = useRef(0);           // live position between renders
-  const dirRef        = useRef<1 | -1>(1);   // +1 = scrolling DOWN, -1 = scrolling UP
+  const scrollRef          = useRef<HTMLDivElement>(null);
+  const startTimeRef       = useRef<number | null>(null);
+  const posAtPauseRef      = useRef<number>(0);
+  const rafRef             = useRef<number>(0);
+  const speedRef           = useRef(1);
+  const positionRef        = useRef(0);
+  const dirRef             = useRef<1 | -1>(1);
+  const manualScrollRef    = useRef(false);
+  const manualTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [playing,   setPlaying]   = useState(false);
-  const [position,  setPosition]  = useState(0);   // 0..TOTAL_DURATION_MS
+  const [position,  setPosition]  = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [speed,     setSpeed]     = useState(1);
-  const [borderIdx, setBorderIdx] = useState(0);
-  const [passCount, setPassCount] = useState(0);    // how many full passes completed
+  const [speed,          setSpeed]         = useState(1);
+  const [currentDohaNum, setCurrentDohaNum] = useState(1);
+  const [passCount,      setPassCount]      = useState(0);
 
-  speedRef.current   = speed;
+  speedRef.current    = speed;
   positionRef.current = position;
 
   const activeIdx = activePart(position);
@@ -140,12 +139,23 @@ export default function TeleprompterPage() {
   const partStart = partOffsets[activeIdx];
   const partElap  = Math.min(position - partStart, activePt.durationSec * 1000);
 
-  // Rotate border dohas every 30s during Sundarkand
   useEffect(() => {
-    if (!playing || activeIdx !== 0) return;
-    const id = setInterval(() => setBorderIdx(i => (i + 1) % borderDohas.length), 30_000);
-    return () => clearInterval(id);
-  }, [playing, activeIdx]);
+    const el = scrollRef.current;
+    if (!el) return;
+    const updateDoha = () => {
+      const secs = Array.from(el.querySelectorAll<HTMLElement>('[id^="doha-"]'));
+      if (!secs.length) return;
+      const top = el.scrollTop + 80;
+      let num = 1;
+      for (const s of secs) {
+        if (s.offsetTop <= top) { const n = parseInt(s.id.replace("doha-", "")); if (!isNaN(n)) num = n; }
+        else break;
+      }
+      setCurrentDohaNum(num);
+    };
+    el.addEventListener("scroll", updateDoha, { passive: true });
+    return () => el.removeEventListener("scroll", updateDoha);
+  }, []);
 
   const animate = useCallback(() => {
     if (startTimeRef.current === null) return;
@@ -154,22 +164,17 @@ export default function TeleprompterPage() {
     const raw   = posAtPauseRef.current + delta * dirRef.current;
 
     let next = raw;
-    let flipped = false;
 
     if (raw >= TOTAL_DURATION_MS) {
-      // Hit the bottom — bounce back up
-      next    = TOTAL_DURATION_MS;
-      flipped = true;
-      dirRef.current      = -1;
+      next = TOTAL_DURATION_MS;
+      dirRef.current        = -1;
       posAtPauseRef.current = TOTAL_DURATION_MS;
       startTimeRef.current  = performance.now();
       setDirection(-1);
       setPassCount(c => c + 1);
     } else if (raw <= 0) {
-      // Hit the top — start going down again
-      next    = 0;
-      flipped = true;
-      dirRef.current      = 1;
+      next = 0;
+      dirRef.current        = 1;
       posAtPauseRef.current = 0;
       startTimeRef.current  = performance.now();
       setDirection(1);
@@ -180,7 +185,7 @@ export default function TeleprompterPage() {
     setPosition(next);
 
     const el = scrollRef.current;
-    if (el) {
+    if (el && !manualScrollRef.current) {
       const maxScroll = el.scrollHeight - el.clientHeight;
       el.scrollTop = maxScroll * (next / TOTAL_DURATION_MS);
     }
@@ -201,6 +206,72 @@ export default function TeleprompterPage() {
     }
     return () => cancelAnimationFrame(rafRef.current);
   }, [playing, animate]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const syncFromScroll = () => {
+      manualScrollRef.current = true;
+      if (manualTimerRef.current) clearTimeout(manualTimerRef.current);
+      manualTimerRef.current = setTimeout(() => {
+        manualScrollRef.current = false;
+        const maxScroll = el.scrollHeight - el.clientHeight;
+        if (maxScroll <= 0) return;
+        const newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+        posAtPauseRef.current = newPos;
+        positionRef.current   = newPos;
+        setPosition(newPos);
+        if (startTimeRef.current !== null) {
+          startTimeRef.current = performance.now();
+        }
+      }, 800);
+    };
+
+    el.addEventListener("wheel",      syncFromScroll, { passive: true });
+    el.addEventListener("touchmove",  syncFromScroll, { passive: true });
+    return () => {
+      el.removeEventListener("wheel",     syncFromScroll);
+      el.removeEventListener("touchmove", syncFromScroll);
+    };
+  }, []);
+
+  const jumpToSection = useCallback((delta: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const sections = Array.from(el.querySelectorAll<HTMLElement>("[data-section]"));
+    if (!sections.length) return;
+
+    const scrollTop = el.scrollTop;
+    const pad = 60;
+
+    let curIdx = 0;
+    for (let i = 0; i < sections.length; i++) {
+      if (sections[i].offsetTop <= scrollTop + pad) curIdx = i;
+      else break;
+    }
+
+    const targetIdx = Math.max(0, Math.min(sections.length - 1, curIdx + delta));
+    const targetEl  = sections[targetIdx];
+    const newTop    = Math.max(0, targetEl.offsetTop - 20);
+
+    manualScrollRef.current = true;
+    if (manualTimerRef.current) clearTimeout(manualTimerRef.current);
+
+    el.scrollTo({ top: newTop, behavior: "smooth" });
+
+    manualTimerRef.current = setTimeout(() => {
+      manualScrollRef.current = false;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll <= 0) return;
+      const newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+      posAtPauseRef.current = newPos;
+      positionRef.current   = newPos;
+      setPosition(newPos);
+      if (startTimeRef.current !== null) startTimeRef.current = performance.now();
+    }, 600);
+  }, []);
 
   const handlePlayPause = () => setPlaying(p => !p);
 
@@ -226,33 +297,31 @@ export default function TeleprompterPage() {
     speedRef.current = s;
   };
 
-  const doha      = borderDohas[borderIdx];
-  const dohaLines = doha.text.split("—").map(s => s.trim());
+  const sundarkandSections = parts[0].body.kind === "sundarkand" ? parts[0].body.sections : [];
+  const currentSection     = sundarkandSections.find(s => s.doha.number === currentDohaNum);
+  const currentDohaText    = currentSection?.doha.text ?? "";
+  const dohaLines          = currentDohaText.split(",").map(s => s.trim());
 
-  // Border content: show doha during Sundarkand, else part title
   const borderLabel = activeIdx === 0
-    ? `॥ दोहा ${doha.number} ॥`
+    ? `॥ दोहा ${currentDohaNum} ॥`
     : `॥ ${activePt.title} ॥`;
   const borderText = activeIdx === 0
-    ? doha.text
+    ? currentDohaText
     : activePt.headerLines[0];
 
-  const dirArrow   = direction === 1 ? "↓" : "↑";
-  const dirLabel   = direction === 1 ? "आगे" : "वापस";
+  const dirArrow = direction === 1 ? "↓" : "↑";
+  const dirLabel = direction === 1 ? "आगे" : "वापस";
 
   return (
     <div className="tp-root">
 
-      {/* ── TOP BORDER ── */}
       <div className="tp-border tp-border--top" style={{ borderColor: activePt.accentColor }}>
         <span className="tp-border__num" style={{ color: activePt.accentColor }}>{borderLabel}</span>
         <span className="tp-border__text">{borderText}</span>
       </div>
 
-      {/* ── MIDDLE ── */}
       <div className="tp-middle">
 
-        {/* LEFT BORDER */}
         <div className="tp-border tp-border--side tp-border--left" style={{ borderColor: activePt.accentColor }}>
           <div className="tp-border__side-inner">
             <span className="tp-border__num tp-border__num--vert" style={{ color: activePt.accentColor }}>
@@ -269,14 +338,10 @@ export default function TeleprompterPage() {
           </div>
         </div>
 
-        {/* MAIN SCROLL */}
         <div className="tp-scroll" ref={scrollRef}>
           <div className="tp-content">
-
-            {/* All parts rendered sequentially in one scroll container */}
             {parts.map((part, pi) => (
               <div key={part.id} className="tp-part">
-                {/* Part header */}
                 <div
                   className="tp-part__header"
                   style={{ borderColor: part.accentColor }}
@@ -294,7 +359,6 @@ export default function TeleprompterPage() {
                   </div>
                 </div>
 
-                {/* Mangalacharan / opening lines */}
                 <div className="tp-mangal">
                   {part.headerLines.map((line, li) => (
                     <div
@@ -311,10 +375,8 @@ export default function TeleprompterPage() {
                   ))}
                 </div>
 
-                {/* Part body */}
                 <PartContent part={part} />
 
-                {/* Part separator */}
                 {pi < parts.length - 1 && (
                   <div className="tp-part-sep">
                     <span style={{ color: parts[pi + 1].accentColor }}>
@@ -325,16 +387,13 @@ export default function TeleprompterPage() {
               </div>
             ))}
 
-            {/* Final samapti */}
             <div className="tp-samapti tp-samapti--final">
               <div className="tp-samapti__sub">॥ सम्पूर्ण पाठ समाप्त ॥</div>
               <div className="tp-samapti__jay">जय श्री राम ॥ जय हनुमान ॥</div>
             </div>
-
           </div>
         </div>
 
-        {/* RIGHT BORDER */}
         <div className="tp-border tp-border--side tp-border--right" style={{ borderColor: activePt.accentColor }}>
           <div className="tp-border__side-inner">
             <span className="tp-border__num tp-border__num--vert" style={{ color: activePt.accentColor }}>
@@ -353,16 +412,13 @@ export default function TeleprompterPage() {
 
       </div>
 
-      {/* ── BOTTOM BORDER ── */}
       <div className="tp-border tp-border--bottom" style={{ borderColor: activePt.accentColor }}>
         <span className="tp-border__num" style={{ color: activePt.accentColor }}>{borderLabel}</span>
         <span className="tp-border__text">{borderText}</span>
       </div>
 
-      {/* ── CONTROLS ── */}
       <div className="tp-controls">
 
-        {/* Part tracker row */}
         <div className="tp-part-tracker">
           {parts.map((p, i) => (
             <div
@@ -375,7 +431,6 @@ export default function TeleprompterPage() {
               {p.subtitle}
             </div>
           ))}
-          {/* Direction + pass indicator */}
           {playing && (
             <div className="tp-dir-badge" style={{ color: activePt.accentColor }}>
               {dirArrow} {dirLabel}
@@ -384,7 +439,6 @@ export default function TeleprompterPage() {
           )}
         </div>
 
-        {/* Timer */}
         <div className="tp-timer">
           <span className="tp-dir-arrow" style={{ color: activePt.accentColor }}>{playing ? dirArrow : "⏸"}</span>
           <span className="tp-timer__part" style={{ color: activePt.accentColor }}>
@@ -402,7 +456,6 @@ export default function TeleprompterPage() {
           <span className="tp-timer__total">{formatTime(TOTAL_DURATION_MS)}</span>
         </div>
 
-        {/* Segmented progress bar — shows position needle, not fill */}
         <div className="tp-progress-seg">
           {parts.map((p, i) => {
             const segStart = partOffsets[i];
@@ -425,9 +478,9 @@ export default function TeleprompterPage() {
           })}
         </div>
 
-        {/* Buttons */}
         <div className="tp-btns">
           <button className="tp-btn tp-btn--reset" onClick={handleReset}>⏮ आरंभ</button>
+          <button className="tp-btn tp-btn--nav" onClick={() => jumpToSection(-1)} title="पिछला दोहा">◀ पिछला</button>
           <button
             className="tp-btn tp-btn--play"
             onClick={handlePlayPause}
@@ -435,6 +488,7 @@ export default function TeleprompterPage() {
           >
             {playing ? "⏸ विराम" : position > 0 ? "▶ जारी रखें" : "▶ प्रारंभ"}
           </button>
+          <button className="tp-btn tp-btn--nav" onClick={() => jumpToSection(1)} title="अगला दोहा">अगला ▶</button>
           <div className="tp-speed">
             <span className="tp-speed__label">गति:</span>
             {[0.5, 0.75, 1, 1.25, 1.5].map(s => (
