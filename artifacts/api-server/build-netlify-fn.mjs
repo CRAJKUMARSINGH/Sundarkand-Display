@@ -22,13 +22,12 @@ const outDir = path.resolve(__dirname, "../../netlify/functions/dist");
 await rm(outDir, { recursive: true, force: true });
 
 await esbuild({
-  entryPoints: [path.resolve(__dirname, "src/app.ts")],
+  entryPoints: { "api-bundle": path.resolve(__dirname, "src/app.ts") },
   platform: "node",
   bundle: true,
   format: "esm",
   outdir: outDir,
   outExtension: { ".js": ".mjs" },
-  entryNames: "api-bundle",
   logLevel: "info",
   external: [
     "*.node",
