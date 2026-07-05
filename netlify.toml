@@ -5,7 +5,7 @@
   functions = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
   PNPM_VERSION = "11"
   # PORT and BASE_PATH are required by vite.config.ts at build time
   PORT      = "5000"
