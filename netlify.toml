@@ -1,11 +1,12 @@
 [build]
   base      = "."
-  command   = "npm install -g pnpm@9 && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/api-server run build:netlify-fn && pnpm --filter @workspace/sundarkand run build"
+  command   = "npm install -g pnpm@11 && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/api-server run build:netlify-fn && pnpm --filter @workspace/sundarkand run build"
   publish   = "artifacts/sundarkand/dist/public"
   functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
+  PNPM_VERSION = "11"
   # PORT and BASE_PATH are required by vite.config.ts at build time
   PORT      = "5000"
   BASE_PATH = "/"

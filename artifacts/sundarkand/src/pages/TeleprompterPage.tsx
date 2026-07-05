@@ -298,7 +298,7 @@ export default function TeleprompterPage() {
   };
 
   const sundarkandSections = parts[0].body.kind === "sundarkand" ? parts[0].body.sections : [];
-  const currentSection     = sundarkandSections.find(s => s.doha.number === currentDohaNum);
+  const currentSection     = sundarkandSections.find(s => Number(s.doha.number) === currentDohaNum);
   const currentDohaText    = currentSection?.doha.text ?? "";
   const dohaLines          = currentDohaText.split(",").map(s => s.trim());
 

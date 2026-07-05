@@ -805,19 +805,13 @@ function parseText(): { preamble: Verse[]; sections: Section[] } {
     // For dohas and shlokas, a new entry starts when previous is complete
     if (currentVerseType === "doha" || currentVerseType === "shlok" || currentVerseType === "chhand") {
       // Each line can be its own verse for these types
-      if (currentVerseLines.length > 0 && currentVerseType === "chaupai") {
-        // chaupai: collect multiple lines
+      // For doha/shlok/chhand: check if new verse should start
+      if (currentVerseLines.length > 0) {
+        // these are single-block verses, just append
         currentVerseLines.push(line);
+        flushVerse();
       } else {
-        // For doha/shlok/chhand: check if new verse should start
-        if (currentVerseLines.length > 0 &&
-          (currentVerseType === "doha" || currentVerseType === "shlok" || currentVerseType === "chhand")) {
-          // these are single-block verses, just append
-          currentVerseLines.push(line);
-          flushVerse();
-        } else {
-          currentVerseLines.push(line);
-        }
+        currentVerseLines.push(line);
       }
     } else {
       currentVerseLines.push(line);
