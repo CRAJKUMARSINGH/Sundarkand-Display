@@ -1,6 +1,6 @@
 [build]
   base      = "."
-  command   = "npm install -g pnpm@11 && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/api-server run build:netlify-fn && pnpm --filter @workspace/sundarkand run build"
+  command   = "pnpm install --no-frozen-lockfile && pnpm --filter @workspace/api-server run build:netlify-fn && pnpm --filter @workspace/sundarkand run build"
   publish   = "artifacts/sundarkand/dist/public"
   functions = "netlify/functions"
 
