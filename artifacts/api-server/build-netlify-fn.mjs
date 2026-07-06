@@ -1,9 +1,8 @@
 /**
  * build-netlify-fn.mjs
  *
- * Bundles artifacts/api-server/src/app.ts (the Express app, without app.listen)
- * into ../../netlify/functions/dist/api-bundle.mjs so it can be imported by
- * the Netlify serverless function wrapper.
+ * Bundles the Express app and serverless-http wrapper into
+ * ../../netlify/functions/dist/api-bundle.mjs for the Netlify function entry.
  *
  * Run via: pnpm --filter @workspace/api-server run build:netlify-fn
  */
@@ -22,7 +21,7 @@ const outDir = path.resolve(__dirname, "../../netlify/functions/dist");
 await rm(outDir, { recursive: true, force: true });
 
 await esbuild({
-  entryPoints: { "api-bundle": path.resolve(__dirname, "src/app.ts") },
+  entryPoints: { "api-bundle": path.resolve(__dirname, "src/netlify-handler.ts") },
   platform: "node",
   bundle: true,
   format: "esm",
