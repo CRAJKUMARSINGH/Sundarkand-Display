@@ -187,7 +187,23 @@ export default function TeleprompterPage() {
     const el = scrollRef.current;
     if (el && !manualScrollRef.current) {
       const maxScroll = el.scrollHeight - el.clientHeight;
-      el.scrollTop = maxScroll * (next / TOTAL_DURATION_MS);
+      if (maxScroll > 0) {
+        // Map position to scroll using per-part content proportions
+        const partEls = Array.from(el.querySelectorAll<HTMLElement>('.tp-part'));
+        if (partEls.length === parts.length) {
+          const idx = activePart(next);
+          const partStart = partOffsets[idx];
+          const partDur   = parts[idx].durationSec * 1000;
+          const partFrac  = partDur > 0 ? Math.min((next - partStart) / partDur, 1) : 0;
+          const partEl    = partEls[idx];
+          const partTop   = partEl.offsetTop;
+          const partH     = partEl.offsetHeight;
+          const targetScroll = partTop + partFrac * partH - el.clientHeight * 0.15;
+          el.scrollTop = Math.max(0, Math.min(targetScroll, maxScroll));
+        } else {
+          el.scrollTop = maxScroll * (next / TOTAL_DURATION_MS);
+        }
+      }
     }
 
     rafRef.current = requestAnimationFrame(animate);
@@ -218,7 +234,27 @@ export default function TeleprompterPage() {
         manualScrollRef.current = false;
         const maxScroll = el.scrollHeight - el.clientHeight;
         if (maxScroll <= 0) return;
-        const newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+
+        // Map scroll position back to time using per-part content proportions
+        const partEls = Array.from(el.querySelectorAll<HTMLElement>('.tp-part'));
+        let newPos = 0;
+        if (partEls.length === parts.length) {
+          const scrollTop = el.scrollTop;
+          let bestIdx = 0;
+          for (let i = 0; i < partEls.length; i++) {
+            if (partEls[i].offsetTop <= scrollTop + el.clientHeight * 0.15) bestIdx = i;
+            else break;
+          }
+          const partEl   = partEls[bestIdx];
+          const partTop  = partEl.offsetTop;
+          const partH    = partEl.offsetHeight;
+          const withinH  = Math.max(0, scrollTop + el.clientHeight * 0.15 - partTop);
+          const partFrac = partH > 0 ? Math.min(withinH / partH, 1) : 0;
+          newPos = partOffsets[bestIdx] + partFrac * parts[bestIdx].durationSec * 1000;
+        } else {
+          newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+        }
+
         posAtPauseRef.current = newPos;
         positionRef.current   = newPos;
         setPosition(newPos);
@@ -263,9 +299,25 @@ export default function TeleprompterPage() {
 
     manualTimerRef.current = setTimeout(() => {
       manualScrollRef.current = false;
-      const maxScroll = el.scrollHeight - el.clientHeight;
-      if (maxScroll <= 0) return;
-      const newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+      const partEls = Array.from(el.querySelectorAll<HTMLElement>('.tp-part'));
+      let newPos = 0;
+      if (partEls.length === parts.length) {
+        const scrollTop = el.scrollTop;
+        let bestIdx = 0;
+        for (let i = 0; i < partEls.length; i++) {
+          if (partEls[i].offsetTop <= scrollTop + el.clientHeight * 0.15) bestIdx = i;
+          else break;
+        }
+        const partEl   = partEls[bestIdx];
+        const partTop  = partEl.offsetTop;
+        const partH    = partEl.offsetHeight;
+        const withinH  = Math.max(0, scrollTop + el.clientHeight * 0.15 - partTop);
+        const partFrac = partH > 0 ? Math.min(withinH / partH, 1) : 0;
+        newPos = partOffsets[bestIdx] + partFrac * parts[bestIdx].durationSec * 1000;
+      } else {
+        const maxScroll = el.scrollHeight - el.clientHeight;
+        if (maxScroll > 0) newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+      }
       posAtPauseRef.current = newPos;
       positionRef.current   = newPos;
       setPosition(newPos);
