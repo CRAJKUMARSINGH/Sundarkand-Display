@@ -452,9 +452,8 @@ export default function TeleprompterPage() {
           <div className="tp-content">
           {/* Credits Section */}
           <div className="tp-credits">
-            {/* Replace with your photo: place "author.jpg" in artifacts/sundarkand/public folder */}
             <img
-              src="https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=a%20humble%20rambhakt%20in%20traditional%20indian%20attire%2C%20spiritual%20portrait%2C%20warm%20colors&image_size=square"
+              src="/author.jpg"
               alt="Rajkumar Arthuna"
               className="tp-credits-photo"
             />
