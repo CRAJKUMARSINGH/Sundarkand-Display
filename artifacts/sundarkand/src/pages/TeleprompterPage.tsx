@@ -363,14 +363,21 @@ export default function TeleprompterPage() {
 
     // If no doha number match, search all content for the query
     if (!targetEl) {
-      // Search all content elements inside the scroll container
-      const allContentElements = el.querySelectorAll<HTMLElement>(
-        '.tp-chaupai, .tp-doha-block__text, .tp-aarti-verse, .tp-samapti__line, .tp-samapti__sub, .tp-samapti__jay, .tp-bajrang-label'
-      );
-      for (const element of allContentElements) {
-        if (element.textContent?.toLowerCase().includes(query)) {
-          targetEl = element.closest('[data-section]') || element.closest('.tp-section') || element.closest('.tp-part') || element;
-          break;
+      // Search all text in the scroll container - walk the DOM to find text content
+      const allElements = el.querySelectorAll<HTMLElement>('*');
+      for (const element of allElements) {
+        // Check if this element has direct text content that matches
+        if (element.firstChild?.nodeType === Node.TEXT_NODE && element.textContent?.trim()) {
+          if (element.textContent?.toLowerCase().includes(query)) {
+            // Find a suitable scroll target
+            targetEl = element.closest('[data-section]') || 
+                       element.closest('.tp-section') || 
+                       element.closest('.tp-part') || 
+                       element.closest('.tp-chaupai') || 
+                       element.closest('.tp-doha-block') || 
+                       element;
+            break;
+          }
         }
       }
     }
