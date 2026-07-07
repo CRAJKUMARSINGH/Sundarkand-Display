@@ -130,6 +130,7 @@ export default function TeleprompterPage() {
   const [speed,          setSpeed]         = useState(1);
   const [currentDohaNum, setCurrentDohaNum] = useState(1);
   const [passCount,      setPassCount]      = useState(0);
+  const [searchQuery,    setSearchQuery]    = useState("");
 
   speedRef.current    = speed;
   positionRef.current = position;
@@ -349,6 +350,63 @@ export default function TeleprompterPage() {
     speedRef.current = s;
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return;
+
+    const el = scrollRef.current;
+    if (!el) return;
+
+    // First try searching for a doha number (like "1", "5", "1क")
+    let targetEl = el.querySelector<HTMLElement>(`#doha-${query}`);
+
+    // If no doha number match, search all content for the query
+    if (!targetEl) {
+      const allTextElements = el.querySelectorAll<HTMLElement>('.tp-chaupai, .tp-doha-block__text, .tp-aarti-verse');
+      for (const textEl of allTextElements) {
+        if (textEl.textContent?.toLowerCase().includes(query)) {
+          targetEl = textEl.closest('[data-section]') || textEl;
+          break;
+        }
+      }
+    }
+
+    if (targetEl) {
+      manualScrollRef.current = true;
+      if (manualTimerRef.current) clearTimeout(manualTimerRef.current);
+
+      el.scrollTo({ top: targetEl.offsetTop - 20, behavior: "smooth" });
+
+      manualTimerRef.current = setTimeout(() => {
+        manualScrollRef.current = false;
+        const partEls = Array.from(el.querySelectorAll<HTMLElement>('.tp-part'));
+        let newPos = 0;
+        if (partEls.length === parts.length) {
+          const scrollTop = el.scrollTop;
+          let bestIdx = 0;
+          for (let i = 0; i < partEls.length; i++) {
+            if (partEls[i].offsetTop <= scrollTop + el.clientHeight * 0.15) bestIdx = i;
+            else break;
+          }
+          const partEl   = partEls[bestIdx];
+          const partTop  = partEl.offsetTop;
+          const partH    = partEl.offsetHeight;
+          const withinH  = Math.max(0, scrollTop + el.clientHeight * 0.15 - partTop);
+          const partFrac = partH > 0 ? Math.min(withinH / partH, 1) : 0;
+          newPos = partOffsets[bestIdx] + partFrac * parts[bestIdx].durationSec * 1000;
+        } else {
+          const maxScroll = el.scrollHeight - el.clientHeight;
+          if (maxScroll > 0) newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+        }
+        posAtPauseRef.current = newPos;
+        positionRef.current   = newPos;
+        setPosition(newPos);
+        if (startTimeRef.current !== null) startTimeRef.current = performance.now();
+      }, 600);
+    }
+  };
+
   const sundarkandSections = parts[0].body.kind === "sundarkand" ? parts[0].body.sections : [];
   const currentSection     = sundarkandSections.find(s => Number(s.doha.number) === currentDohaNum);
   const currentDohaText    = currentSection?.doha.text ?? "";
@@ -392,8 +450,21 @@ export default function TeleprompterPage() {
 
         <div className="tp-scroll" ref={scrollRef}>
           <div className="tp-content">
-            {parts.map((part, pi) => (
-              <div key={part.id} className="tp-part">
+          {/* Credits Section */}
+          <div className="tp-credits">
+            {/* Replace with your photo: place "author.jpg" in artifacts/sundarkand/public folder */}
+            <img
+              src="https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=a%20humble%20rambhakt%20in%20traditional%20indian%20attire%2C%20spiritual%20portrait%2C%20warm%20colors&image_size=square"
+              alt="Rajkumar Arthuna"
+              className="tp-credits-photo"
+            />
+            <div className="tp-credits-title">AN EFFORT BY HUMBLE RAMBHAKT</div>
+            <div className="tp-credits-name">राजकुमार अरथुना</div>
+            <div className="tp-credits-message">🌺 🙏 सीताराम 🙏 🌺</div>
+          </div>
+
+          {parts.map((part, pi) => (
+            <div key={part.id} className="tp-part">
                 <div
                   className="tp-part__header"
                   style={{ borderColor: part.accentColor }}
@@ -470,6 +541,17 @@ export default function TeleprompterPage() {
       </div>
 
       <div className="tp-controls">
+
+        <form onSubmit={handleSearch} className="tp-search-form">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search: Doha number, word, or phrase (e.g., 1, 5, SUNAHU RAM, सुनहु राम)"
+            className="tp-search-input"
+          />
+          <button type="submit" className="tp-search-btn">Jump</button>
+        </form>
 
         <div className="tp-part-tracker">
           {parts.map((p, i) => (

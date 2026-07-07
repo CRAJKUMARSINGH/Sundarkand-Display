@@ -386,6 +386,42 @@
 
 .tp-content { max-width: 660px; margin: 0 auto; padding: 3rem 2rem 6rem; }
 
+.tp-credits {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(196,137,10,0.3);
+  border-radius: 8px;
+  background: rgba(90,30,0,0.3);
+}
+.tp-credits-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid #C4890A;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(212,160,23,0.4);
+}
+.tp-credits-title {
+  font-size: 1rem;
+  color: #F5E6A3;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+}
+.tp-credits-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #FF6B00;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 8px rgba(255,107,0,0.35);
+}
+.tp-credits-message {
+  font-size: 0.95rem;
+  color: #D4A017;
+  font-style: italic;
+}
+
 .tp-mangal              { text-align: center; margin-bottom: 2.5rem; }
 .tp-mangal__ganesh      { font-size: 1rem; color: #D4A017; letter-spacing: 0.12em; margin-bottom: 0.5rem; }
 .tp-mangal__subtitle    { font-size: 1rem; color: #F5E6A3; margin-bottom: 0.2rem; letter-spacing: 0.06em; }
@@ -420,6 +456,38 @@
 .tp-part-sep     { text-align: center; margin: 3rem 0 0; padding: 1.2rem; border-top: 1px dashed rgba(196,137,10,0.3); font-size: 0.9rem; letter-spacing: 0.12em; opacity: 0.75; }
 
 .tp-controls { background: linear-gradient(180deg, #1A0600 0%, #0D0300 100%); border-top: 2px solid #C4890A; padding: 0.5rem 1rem 0.6rem; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+
+.tp-search-form { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding-bottom: 0.2rem; }
+.tp-search-input {
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 4px;
+  border: 1px solid rgba(196,137,10,0.5);
+  background: rgba(90,30,0,0.5);
+  color: #F5E6A3;
+  min-width: 180px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+.tp-search-input::placeholder { color: rgba(245,230,163,0.5); }
+.tp-search-input:focus { border-color: #FF6B00; box-shadow: 0 0 0 2px rgba(255,107,0,0.25); }
+.tp-search-btn {
+  font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 4px;
+  border: 1px solid #C4890A;
+  cursor: pointer;
+  background: linear-gradient(135deg, #C04B00, #FF6B00);
+  color: #FFF8EC;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.tp-search-btn:hover {
+  background: linear-gradient(135deg, #FF6B00, #D4A017);
+  box-shadow: 0 2px 10px rgba(255,107,0,0.4);
+}
 
 .tp-timer           { display: flex; align-items: baseline; gap: 0.4rem; justify-content: center; font-size: 0.85rem; flex-wrap: wrap; }
 .tp-timer__elapsed  { color: #FF6B00; font-weight: 700; font-family: "Courier New", monospace; font-size: 1.05rem; }
