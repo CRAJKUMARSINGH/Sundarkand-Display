@@ -363,10 +363,13 @@ export default function TeleprompterPage() {
 
     // If no doha number match, search all content for the query
     if (!targetEl) {
-      const allTextElements = el.querySelectorAll<HTMLElement>('.tp-chaupai, .tp-doha-block__text, .tp-aarti-verse');
-      for (const textEl of allTextElements) {
-        if (textEl.textContent?.toLowerCase().includes(query)) {
-          targetEl = textEl.closest('[data-section]') || textEl;
+      // Search all content elements inside the scroll container
+      const allContentElements = el.querySelectorAll<HTMLElement>(
+        '.tp-chaupai, .tp-doha-block__text, .tp-aarti-verse, .tp-samapti__line, .tp-samapti__sub, .tp-samapti__jay, .tp-bajrang-label'
+      );
+      for (const element of allContentElements) {
+        if (element.textContent?.toLowerCase().includes(query)) {
+          targetEl = element.closest('[data-section]') || element.closest('.tp-section') || element.closest('.tp-part') || element;
           break;
         }
       }
