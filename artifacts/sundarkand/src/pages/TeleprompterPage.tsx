@@ -448,20 +448,20 @@ export default function TeleprompterPage() {
           </div>
         </div>
 
+        {/* Credits Section - Fixed to bottom right */}
+        <div className="tp-credits">
+          <img
+            src="/author.jpg"
+            alt="Rajkumar Arthuna"
+            className="tp-credits-photo"
+          />
+          <div className="tp-credits-title">AN EFFORT BY HUMBLE RAMBHAKT</div>
+          <div className="tp-credits-name">राजकुमार अरथुना</div>
+          <div className="tp-credits-message">🌺 🙏 सीताराम 🙏 🌺</div>
+        </div>
+
         <div className="tp-scroll" ref={scrollRef}>
           <div className="tp-content">
-          {/* Credits Section */}
-          <div className="tp-credits">
-            <img
-              src="/author.jpg"
-              alt="Rajkumar Arthuna"
-              className="tp-credits-photo"
-            />
-            <div className="tp-credits-title">AN EFFORT BY HUMBLE RAMBHAKT</div>
-            <div className="tp-credits-name">राजकुमार अरथुना</div>
-            <div className="tp-credits-message">🌺 🙏 सीताराम 🙏 🌺</div>
-          </div>
-
           {parts.map((part, pi) => (
             <div key={part.id} className="tp-part">
                 <div
