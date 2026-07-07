@@ -131,6 +131,8 @@ export default function TeleprompterPage() {
   const [currentDohaNum, setCurrentDohaNum] = useState(1);
   const [passCount,      setPassCount]      = useState(0);
   const [searchQuery,    setSearchQuery]    = useState("");
+  const [searchResults,  setSearchResults]  = useState<any[]>([]);
+  const [showResults,    setShowResults]    = useState(false);
 
   speedRef.current    = speed;
   positionRef.current = position;
@@ -416,6 +418,89 @@ export default function TeleprompterPage() {
     }
   };
 
+  // Real-time search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const query = searchQuery.trim().toLowerCase();
+    const results: any[] = [];
+
+    // Check for doha number match first
+    const dohaMatch = el.querySelector(`#doha-${query}`);
+    if (dohaMatch) {
+      results.push({
+        type: 'doha',
+        number: query,
+        element: dohaMatch,
+        text: `Doha ${query}`
+      });
+    }
+
+    // Check all content
+    const allContentElements = el.querySelectorAll('.tp-chaupai, .tp-doha-block__text, .tp-aarti-verse');
+    allContentElements.forEach((element, idx) => {
+      const text = element.textContent?.toLowerCase();
+      if (text && text.includes(query)) {
+        const parent = element.closest('[data-section]') || element.closest('.tp-section') || element.closest('.tp-part');
+        results.push({
+          type: 'verse',
+          index: idx,
+          element: parent || element,
+          text: element.textContent?.substring(0, 80) + '...' || ''
+        });
+      }
+    });
+
+    setSearchResults(results.slice(0, 20)); // Limit to 20 results
+    setShowResults(true);
+  }, [searchQuery]);
+
+  // Jump to a search result
+  const jumpToResult = (result: any) => {
+    const el = scrollRef.current;
+    if (!el || !result.element) return;
+
+    manualScrollRef.current = true;
+    if (manualTimerRef.current) clearTimeout(manualTimerRef.current);
+
+    el.scrollTo({ top: result.element.offsetTop - 20, behavior: "smooth" });
+    setShowResults(false);
+
+    manualTimerRef.current = setTimeout(() => {
+      manualScrollRef.current = false;
+      const partEls = Array.from(el.querySelectorAll<HTMLElement>('.tp-part'));
+      let newPos = 0;
+      if (partEls.length === parts.length) {
+        const scrollTop = el.scrollTop;
+        let bestIdx = 0;
+        for (let i = 0; i < partEls.length; i++) {
+          if (partEls[i].offsetTop <= scrollTop + el.clientHeight * 0.15) bestIdx = i;
+          else break;
+        }
+        const partEl   = partEls[bestIdx];
+        const partTop  = partEl.offsetTop;
+        const partH    = partEl.offsetHeight;
+        const withinH  = Math.max(0, scrollTop + el.clientHeight * 0.15 - partTop);
+        const partFrac = partH > 0 ? Math.min(withinH / partH, 1) : 0;
+        newPos = partOffsets[bestIdx] + partFrac * parts[bestIdx].durationSec * 1000;
+      } else {
+        const maxScroll = el.scrollHeight - el.clientHeight;
+        if (maxScroll > 0) newPos = (el.scrollTop / maxScroll) * TOTAL_DURATION_MS;
+      }
+      posAtPauseRef.current = newPos;
+      positionRef.current   = newPos;
+      setPosition(newPos);
+      if (startTimeRef.current !== null) startTimeRef.current = performance.now();
+    }, 600);
+  };
+
   const sundarkandSections = parts[0].body.kind === "sundarkand" ? parts[0].body.sections : [];
   const currentSection     = sundarkandSections.find(s => Number(s.doha.number) === currentDohaNum);
   const currentDohaText    = currentSection?.doha.text ?? "";
@@ -557,8 +642,36 @@ export default function TeleprompterPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search: Doha number, word, or phrase (e.g., 1, 5, SUNAHU RAM, सुनहु राम)"
             className="tp-search-input"
+            onFocus={() => searchQuery.trim() && setShowResults(true)}
           />
           <button type="submit" className="tp-search-btn">Jump</button>
+
+          {/* Search Results Dropdown */}
+          {showResults && searchResults.length > 0 && (
+            <div className="tp-search-results">
+              {searchResults.map((result, idx) => (
+                <div
+                  key={idx}
+                  className="tp-search-result-item"
+                  onClick={() => jumpToResult(result)}
+                >
+                  <span className="tp-search-result-icon">
+                    {result.type === 'doha' ? '📜' : '📝'}
+                  </span>
+                  <span className="tp-search-result-text">
+                    {result.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* No Results Message */}
+          {showResults && searchResults.length === 0 && searchQuery.trim() && (
+            <div className="tp-search-no-results">
+              No matches found for "{searchQuery}"
+            </div>
+          )}
         </form>
 
         <div className="tp-part-tracker">
