@@ -25,86 +25,34 @@ function activePart(elapsedMs: number): number {
   return 0;
 }
 
-// Simple Roman → Devanagari transliterator (IAST/Harvard-Kyoto style)
-function romanToDevanagari(text: string): string {
-  // First handle special consonants/vowels
-  const map: Record<string, string> = {
-    'a': 'अ', 'aa': 'आ', 'A': 'आ',
-    'i': 'इ', 'ii': 'ई', 'I': 'ई',
-    'u': 'उ', 'uu': 'ऊ', 'U': 'ऊ',
-    'e': 'ए', 'ai': 'ऐ', 'o': 'ओ', 'au': 'औ',
-    'ri': 'ऋ', 'R': 'ऋ', 'lri': 'ऌ',
-    'k': 'क', 'kh': 'ख', 'g': 'ग', 'gh': 'घ', 'n~': 'ङ',
-    'c': 'च', 'ch': 'छ', 'j': 'ज', 'jh': 'झ', '~n': 'ञ',
-    'T': 'ट', 'Th': 'ठ', 'D': 'ड', 'Dh': 'ढ', 'N': 'ण',
-    't': 'त', 'th': 'थ', 'd': 'द', 'dh': 'ध', 'n': 'न',
-    'p': 'प', 'ph': 'फ', 'b': 'ब', 'bh': 'भ', 'm': 'म',
-    'y': 'य', 'r': 'र', 'l': 'ल', 'v': 'व', 'w': 'व',
-    'S': 'श', 'sh': 'ष', 's': 'स', 'h': 'ह',
-    'M': 'ं', 'H': 'ः', '.': '।',
-    'shri': 'श्री', 'Shri': 'श्री', 'sri': 'श्री',
-    'raam': 'राम', 'ram': 'राम',
-    'hanuman': 'हनुमान', 'hanumaan': 'हनुमान',
-    'sundar': 'सुन्दर', 'sundara': 'सुन्दर',
-  };
+// Simple common word mappings for Roman → Devanagari search
+const ROMAN_TO_DEVANAGARI_MAP: Record<string, string> = {
+  'ram': 'राम', 'raam': 'राम',
+  'hanuman': 'हनुमान', 'hanumaan': 'हनुमान',
+  'sitaram': 'सीताराम', 'sita': 'सीता',
+  'sundar': 'सुन्दर', 'sundara': 'सुन्दर', 'sundarkand': 'सुन्दरकाण्ड',
+  'sunahu': 'सुनहु', 'suno': 'सुनो',
+  'pawan': 'पवन', 'pavan': 'पवन',
+  'putra': 'पुत्र', 'sut': 'सुत',
+  'bhavan': 'भवन',
+  'milahi': 'मिलहि', 'milayi': 'मिलहि',
+  'manahu': 'मानहु',
+  'vitap': 'विटप',
+  'nutan': 'नूतन',
+  'kislay': 'किसलय'
+};
 
-  // Also generate a reverse map for vowels as matras
-  const vowelMatras: Record<string, string> = {
-    'aa': 'ा', 'A': 'ा',
-    'i': 'ि', 'ii': 'ी', 'I': 'ी',
-    'u': 'ु', 'uu': 'ू', 'U': 'ू',
-    'e': 'े', 'ai': 'ै',
-    'o': 'ो', 'au': 'ौ',
-    'ri': 'ृ', 'R': 'ृ',
-  };
-
-  let result = text;
+function getSearchTerms(query: string): string[] {
+  const terms: string[] = [query.toLowerCase()];
   
-  // First replace long multi-character patterns
-  const sortedKeys = Object.keys(map).sort((a, b) => b.length - a.length);
-  for (const key of sortedKeys) {
-    const regex = new RegExp(key, 'gi');
-    result = result.replace(regex, map[key]);
-  }
-
-  // Now handle consonant + vowel matras (simplified)
-  // First, list all consonants in Devanagari
-  const consonants = 'कखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसह';
-  
-  let i = 0;
-  let finalResult = '';
-  while (i < result.length) {
-    let char = result[i];
-    let isConsonant = consonants.includes(char);
-    
-    if (isConsonant && i + 1 < result.length) {
-      // Check for vowel matra
-      let nextChar = result[i + 1];
-      let twoChars = result[i + 1] + (result[i + 2] || '');
-      
-      let matraAdded = false;
-      for (const [vowel, matra] of Object.entries(vowelMatras)) {
-        if (result.slice(i + 1, i + 1 + vowel.length) === vowel) {
-          finalResult += char + matra;
-          i += vowel.length + 1;
-          matraAdded = true;
-          break;
-        }
-      }
-      
-      if (!matraAdded) {
-        // If no vowel, add virama if followed by consonant, else just consonant
-        const nextIsConsonant = i + 1 < result.length && consonants.includes(result[i + 1]);
-        finalResult += char + (nextIsConsonant ? '्' : '');
-        i++;
-      }
-    } else {
-      finalResult += char;
-      i++;
+  // Add common mappings
+  Object.entries(ROMAN_TO_DEVANAGARI_MAP).forEach(([roman, devanagari]) => {
+    if (query.toLowerCase().includes(roman)) {
+      terms.push(devanagari.toLowerCase());
     }
-  }
+  });
 
-  return finalResult;
+  return terms;
 }
 
 function SundarkandBody({ body }: { body: Extract<PartBody, { kind: "sundarkand" }> }) {
@@ -445,23 +393,26 @@ export default function TeleprompterPage() {
     // First try searching for a doha number (like "1", "5", "1क")
     let targetEl = el.querySelector<HTMLElement>(`#doha-${query}`);
 
-    // If no doha number match, search all content for the query and transliterated query
+    // If no doha number match, search all content
     if (!targetEl) {
-      const transliteratedQuery = romanToDevanagari(query).toLowerCase();
+      const searchTerms = getSearchTerms(query);
       // Search all text in the scroll container - check all elements
       const allElements = el.querySelectorAll<HTMLElement>('*');
       for (const element of allElements) {
-        // Check if any text content of this element matches original OR transliterated
+        // Check if any text content matches any search term
         const text = element.textContent?.toLowerCase().trim();
-        if (text && (text.includes(query) || text.includes(transliteratedQuery))) {
-          // Find a suitable scroll target
-          targetEl = element.closest('[data-section]') || 
-                     element.closest('.tp-section') || 
-                     element.closest('.tp-part') || 
-                     element.closest('.tp-chaupai') || 
-                     element.closest('.tp-doha-block') || 
-                     element;
-          break;
+        if (text) {
+          const matches = searchTerms.some(term => text.includes(term));
+          if (matches) {
+            // Find a suitable scroll target
+            targetEl = element.closest('[data-section]') || 
+                       element.closest('.tp-section') || 
+                       element.closest('.tp-part') || 
+                       element.closest('.tp-chaupai') || 
+                       element.closest('.tp-doha-block') || 
+                       element;
+            break;
+          }
         }
       }
     }
@@ -513,7 +464,7 @@ export default function TeleprompterPage() {
     if (!el) return;
 
     const query = searchQuery.trim().toLowerCase();
-    const transliteratedQuery = romanToDevanagari(query).toLowerCase();
+    const searchTerms = getSearchTerms(query);
     const results: any[] = [];
 
     // Check for doha number match first
@@ -531,14 +482,17 @@ export default function TeleprompterPage() {
     const allContentElements = el.querySelectorAll('.tp-chaupai, .tp-doha-block__text, .tp-aarti-verse');
     allContentElements.forEach((element, idx) => {
       const text = element.textContent?.toLowerCase();
-      if (text && (text.includes(query) || text.includes(transliteratedQuery))) {
-        const parent = element.closest('[data-section]') || element.closest('.tp-section') || element.closest('.tp-part');
-        results.push({
-          type: 'verse',
-          index: idx,
-          element: parent || element,
-          text: element.textContent?.substring(0, 80) + '...' || ''
-        });
+      if (text) {
+        const matches = searchTerms.some(term => text.includes(term));
+        if (matches) {
+          const parent = element.closest('[data-section]') || element.closest('.tp-section') || element.closest('.tp-part');
+          results.push({
+            type: 'verse',
+            index: idx,
+            element: parent || element,
+            text: element.textContent?.substring(0, 80) + '...' || ''
+          });
+        }
       }
     });
 
