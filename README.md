@@ -30,7 +30,7 @@
 ## 🧑‍💻 क्रेडिट्स
 
 <div align="center" style="background: linear-gradient(135deg, #3A1200 0%, #5C1E00 100%); padding: 2rem; border-radius: 12px; border: 2px solid #C4890A;">
-  <h2 style="color: #FF6B00; margin-bottom: 0.5rem;">🙏 AN EFFORT BY HUMBLE RAMBHAKT</h2>
+  <h2 style="color: #FF6B00; margin-bottom: 0.5rem;">🙏 An effort by humble Rambhakt-</h2>
   <h1 style="font-size: 2rem; color: #D4A017; text-shadow: 0 2px 8px rgba(212,160,23,0.5);">
     राजकुमार अरथुना
   </h1>

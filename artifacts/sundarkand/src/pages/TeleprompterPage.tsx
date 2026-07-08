@@ -633,7 +633,7 @@ export default function TeleprompterPage() {
             alt="Rajkumar Arthuna"
             className="tp-credits-photo"
           />
-          <div className="tp-credits-title">AN EFFORT BY HUMBLE RAMBHAKT</div>
+          <div className="tp-credits-title">An effort by humble Rambhakt-</div>
           <div className="tp-credits-name">राजकुमार अरथुना</div>
           <div className="tp-credits-message">🌺 🙏 सीताराम 🙏 🌺</div>
         </div>
