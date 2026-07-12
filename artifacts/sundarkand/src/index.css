@@ -336,12 +336,38 @@
   flex-direction: column;
   height: 100dvh;
   width: 100%;
+  --tp-text-scale: 1;
   background:
     radial-gradient(ellipse at 50% 0%, rgba(212,160,23,0.18) 0%, transparent 60%),
     linear-gradient(180deg, #1A0A00 0%, #2C1000 100%);
   color: #FFF8EC;
   font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif;
   overflow: hidden;
+}
+
+.tp-font--calligraphic {
+  font-family: "Amita", "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif;
+}
+
+.tp-theme--night.tp-root {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(120,90,20,0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #080400 0%, #140800 100%);
+}
+.tp-theme--night .tp-scroll {
+  background:
+    radial-gradient(ellipse at 50% 5%, rgba(120,90,20,0.05) 0%, transparent 55%),
+    linear-gradient(180deg, #080300 0%, #0d0500 100%);
+}
+.tp-theme--night .tp-chaupai,
+.tp-theme--night .tp-doha-block__text { color: #E8D8B0; }
+.tp-theme--night .tp-scene-backdrop { opacity: 0.35; }
+
+.tp-theme--contrast .tp-chaupai { color: #FFFFFF; font-weight: 600; }
+.tp-theme--contrast .tp-doha-block__text { color: #FFF8EC; font-weight: 600; }
+.tp-theme--contrast .tp-border__text { color: #FFFFFF; }
+.tp-theme--contrast .tp-scroll {
+  background: linear-gradient(180deg, #0a0400 0%, #120600 100%);
 }
 
 .tp-border {
@@ -435,11 +461,16 @@
 .tp-divider { text-align: center; color: #D4A017; font-size: 1.1rem; margin: 1.5rem 0 2rem; opacity: 0.6; letter-spacing: 0.5em; }
 .tp-section { margin-bottom: 2.8rem; }
 .tp-chaupais { display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 1.2rem; }
-.tp-chaupai  { font-size: 1.15rem; line-height: 2; color: #FFF8EC; text-align: center; padding: 0.3rem 0; letter-spacing: 0.01em; }
+.tp-chaupai  { font-size: calc(1.15rem * var(--tp-text-scale)); line-height: 2; color: #FFF8EC; text-align: center; padding: 0.3rem 0; letter-spacing: 0.01em; }
 
-.tp-doha-block          { border-top: 1px solid rgba(196,137,10,0.35); border-bottom: 1px solid rgba(196,137,10,0.35); padding: 1rem 1.2rem; margin: 0.5rem 0; background: rgba(90,30,0,0.25); border-radius: 4px; text-align: center; }
-.tp-doha-block__label   { font-size: 0.8rem; color: #D4A017; letter-spacing: 0.12em; margin-bottom: 0.5rem; font-weight: 700; }
-.tp-doha-block__text    { font-size: 1.05rem; line-height: 1.9; color: #F5E6A3; font-style: italic; }
+.tp-doha-block          { border-top: 1px solid rgba(196,137,10,0.35); border-bottom: 1px solid rgba(196,137,10,0.35); padding: 1rem 1.2rem; margin: 0.5rem 0; background: rgba(90,30,0,0.25); border-radius: 4px; text-align: center; position: relative; }
+.tp-doha-block__header  { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.tp-doha-block__label   { font-size: calc(0.8rem * var(--tp-text-scale)); color: #D4A017; letter-spacing: 0.12em; font-weight: 700; }
+.tp-doha-block__text    { font-size: calc(1.05rem * var(--tp-text-scale)); line-height: 1.9; color: #F5E6A3; font-style: italic; }
+.tp-doha-actions        { display: flex; gap: 0.25rem; opacity: 0; transition: opacity 0.15s ease; }
+.tp-doha-block:hover .tp-doha-actions { opacity: 1; }
+.tp-doha-action         { background: rgba(90,30,0,0.6); border: 1px solid rgba(196,137,10,0.4); border-radius: 4px; cursor: pointer; padding: 0.15rem 0.4rem; font-size: 0.75rem; line-height: 1; transition: all 0.15s; }
+.tp-doha-action:hover   { background: rgba(255,107,0,0.25); border-color: #FF6B00; }
 .tp-doha-block--chalisa { margin: 1rem 0; }
 
 .tp-samapti         { text-align: center; margin-top: 3rem; padding: 2rem 1rem; border-top: 2px solid #C4890A; }
@@ -461,6 +492,59 @@
 .tp-part-sep     { text-align: center; margin: 3rem 0 0; padding: 1.2rem; border-top: 1px dashed rgba(196,137,10,0.3); font-size: 0.9rem; letter-spacing: 0.12em; opacity: 0.75; }
 
 .tp-controls { background: linear-gradient(180deg, #1A0600 0%, #0D0300 100%); border-top: 2px solid #C4890A; padding: 0.5rem 1rem 0.6rem; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+
+.tp-reader-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.15rem;
+}
+.tp-reader-btn {
+  font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  border: 1px solid rgba(196,137,10,0.4);
+  background: rgba(90,30,0,0.45);
+  color: #F5E6A3;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 600;
+}
+.tp-reader-btn:hover { border-color: #D4A017; color: #D4A017; }
+.tp-reader-btn--resume { border-color: #FF6B00; color: #FF6B00; background: rgba(255,107,0,0.12); }
+.tp-copy-feedback { font-size: 0.7rem; color: #6aaa40; font-style: italic; }
+
+.tp-doha-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  justify-content: center;
+  padding: 0.1rem 0;
+}
+.tp-doha-progress__label {
+  font-size: 0.72rem;
+  color: #D4A017;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+.tp-doha-progress__track {
+  flex: 1;
+  max-width: 280px;
+  height: 4px;
+  background: rgba(196,137,10,0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.tp-doha-progress__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #C4890A, #FF6B00);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
 
 .tp-search-form { 
   display: flex; 
@@ -599,8 +683,9 @@
   .tp-border--side       { width: 3.5rem; min-width: 3.5rem; }
   .tp-border__text--vert { display: none; }
   .tp-content            { padding: 2rem 1rem 5rem; }
-  .tp-chaupai            { font-size: 1rem; }
+  .tp-chaupai            { font-size: calc(1rem * var(--tp-text-scale)); }
   .tp-part-pill          { font-size: 0.6rem; padding: 0.12rem 0.4rem; }
+  .tp-doha-actions       { opacity: 1; }
 }
 
 /* --- Optional scene-sync narrative art (SceneBackdrop.tsx) --- */

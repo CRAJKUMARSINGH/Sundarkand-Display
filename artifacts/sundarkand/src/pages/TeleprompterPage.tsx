@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type CSSProperties } from "react";
 import {
   parts, partOffsets, TOTAL_DURATION_MS, borderDohas,
-  Part, PartBody,
+  Part, PartBody, type Section,
 } from "@/data/sundarkand";
 import SceneBackdrop from "@/components/SceneBackdrop";
+import { useReaderPrefs, TOTAL_DOHAS } from "@/hooks/useReaderPrefs";
 
 function formatTime(ms: number) {
   const t = Math.max(0, Math.floor(ms / 1000));
@@ -56,7 +57,24 @@ function getSearchTerms(query: string): string[] {
   return terms;
 }
 
-function SundarkandBody({ body }: { body: Extract<PartBody, { kind: "sundarkand" }> }) {
+function formatDohaText(section: Section): string {
+  const lines = [
+    `॥ दोहा ${section.doha.number} ॥`,
+    section.doha.text,
+    ...section.chaupaiPlaceholders,
+  ];
+  return lines.join("\n");
+}
+
+function SundarkandBody({
+  body,
+  onCopyDoha,
+  onShareDoha,
+}: {
+  body: Extract<PartBody, { kind: "sundarkand" }>;
+  onCopyDoha: (section: Section) => void;
+  onShareDoha: (section: Section) => void;
+}) {
   return (
     <>
       <div className="tp-divider">❧ ❧ ❧</div>
@@ -68,7 +86,29 @@ function SundarkandBody({ body }: { body: Extract<PartBody, { kind: "sundarkand"
             ))}
           </div>
           <div className="tp-doha-block">
-            <div className="tp-doha-block__label">॥ दोहा {section.doha.number} ॥</div>
+            <div className="tp-doha-block__header">
+              <div className="tp-doha-block__label">॥ दोहा {section.doha.number} ॥</div>
+              <div className="tp-doha-actions">
+                <button
+                  type="button"
+                  className="tp-doha-action"
+                  title="Copy this doha"
+                  aria-label={`Copy doha ${section.doha.number}`}
+                  onClick={() => onCopyDoha(section)}
+                >
+                  📋
+                </button>
+                <button
+                  type="button"
+                  className="tp-doha-action"
+                  title="Share this doha"
+                  aria-label={`Share doha ${section.doha.number}`}
+                  onClick={() => onShareDoha(section)}
+                >
+                  ↗
+                </button>
+              </div>
+            </div>
             <div className="tp-doha-block__text">{section.doha.text}</div>
           </div>
         </div>
@@ -134,10 +174,18 @@ function BajrangBody({ body }: { body: Extract<PartBody, { kind: "bajrangbaan" }
   );
 }
 
-function PartContent({ part }: { part: Part }) {
+function PartContent({
+  part,
+  onCopyDoha,
+  onShareDoha,
+}: {
+  part: Part;
+  onCopyDoha: (section: Section) => void;
+  onShareDoha: (section: Section) => void;
+}) {
   const body = part.body;
   switch (body.kind) {
-    case "sundarkand":   return <SundarkandBody body={body} />;
+    case "sundarkand":   return <SundarkandBody body={body} onCopyDoha={onCopyDoha} onShareDoha={onShareDoha} />;
     case "chalisa":      return <ChalisaBody body={body} />;
     case "aarti":        return <AartiBody body={body} title={part.title} />;
     case "bajrangbaan":  return <BajrangBody body={body} />;
@@ -164,6 +212,18 @@ export default function TeleprompterPage() {
   const [searchQuery,    setSearchQuery]    = useState("");
   const [searchResults,  setSearchResults]  = useState<any[]>([]);
   const [showResults,    setShowResults]    = useState(false);
+  const [copyFeedback,   setCopyFeedback]   = useState("");
+  const [showResume,     setShowResume]     = useState(false);
+
+  const {
+    prefs,
+    hasBookmark,
+    stepFontSize,
+    toggleFontFamily,
+    cycleTheme,
+    saveBookmark,
+    clearBookmark,
+  } = useReaderPrefs();
 
   speedRef.current    = speed;
   positionRef.current = position;
@@ -186,10 +246,15 @@ export default function TeleprompterPage() {
         else break;
       }
       setCurrentDohaNum(num);
+      saveBookmark(num, el.scrollTop);
     };
     el.addEventListener("scroll", updateDoha, { passive: true });
     return () => el.removeEventListener("scroll", updateDoha);
-  }, []);
+  }, [saveBookmark]);
+
+  useEffect(() => {
+    if (hasBookmark) setShowResume(true);
+  }, [hasBookmark]);
 
   const animate = useCallback(() => {
     if (startTimeRef.current === null) return;
@@ -371,8 +436,55 @@ export default function TeleprompterPage() {
     positionRef.current   = 0;
     dirRef.current        = 1;
     startTimeRef.current  = null;
+    clearBookmark();
+    setShowResume(false);
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   };
+
+  const copyDoha = useCallback(async (section: Section) => {
+    const text = formatDohaText(section);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyFeedback(`दोहा ${section.doha.number} कॉपी हुआ`);
+      setTimeout(() => setCopyFeedback(""), 2000);
+    } catch {
+      setCopyFeedback("कॉपी विफल");
+      setTimeout(() => setCopyFeedback(""), 2000);
+    }
+  }, []);
+
+  const shareDoha = useCallback(async (section: Section) => {
+    const text = formatDohaText(section);
+    const title = `सुन्दरकाण्ड — दोहा ${section.doha.number}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        setCopyFeedback(`दोहा ${section.doha.number} कॉपी हुआ (साझा के लिए)`);
+        setTimeout(() => setCopyFeedback(""), 2000);
+      }
+    } catch {
+      /* user cancelled share */
+    }
+  }, []);
+
+  const resumeReading = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const target = el.querySelector<HTMLElement>(`#doha-${prefs.lastDoha}`);
+    const top = target ? Math.max(0, target.offsetTop - 20) : prefs.lastScrollTop;
+    manualScrollRef.current = true;
+    el.scrollTo({ top, behavior: "smooth" });
+    setCurrentDohaNum(prefs.lastDoha);
+    setShowResume(false);
+    setTimeout(() => { manualScrollRef.current = false; }, 800);
+  }, [prefs.lastDoha, prefs.lastScrollTop]);
+
+  const themeLabel =
+    prefs.theme === "night" ? "🌙 रात्रि" :
+    prefs.theme === "contrast" ? "◐ उच्च कॉन्ट्रास्ट" :
+    "🪔 भक्ति";
 
   const changeSpeed = (s: number) => {
     if (playing && startTimeRef.current !== null) {
@@ -556,7 +668,10 @@ export default function TeleprompterPage() {
   const dirLabel = direction === 1 ? "आगे" : "वापस";
 
   return (
-    <div className="tp-root">
+    <div
+      className={`tp-root tp-theme--${prefs.theme} tp-font--${prefs.fontFamily}`}
+      style={{ "--tp-text-scale": prefs.fontSize } as CSSProperties}
+    >
       {activeIdx === 0 && <SceneBackdrop dohaNum={currentDohaNum} />}
 
       <div className="tp-border tp-border--top" style={{ borderColor: activePt.accentColor }}>
@@ -582,17 +697,7 @@ export default function TeleprompterPage() {
           </div>
         </div>
 
-        {/* Credits Section - Fixed to bottom right */}
-        <div className="tp-credits">
-          <img
-            src="/author.jpg"
-            alt="Rajkumar Arthuna"
-            className="tp-credits-photo"
-          />
-          <div className="tp-credits-title">An effort by humble Rambhakt-</div>
-          <div className="tp-credits-name">राजकुमार अरथुना</div>
-          <div className="tp-credits-message">🌺 🙏 सीताराम 🙏 🌺</div>
-        </div>
+        {/* Credits rendered by App.tsx */}
 
         <div className="tp-scroll" ref={scrollRef}>
           <div className="tp-content">
@@ -631,7 +736,7 @@ export default function TeleprompterPage() {
                   ))}
                 </div>
 
-                <PartContent part={part} />
+                <PartContent part={part} onCopyDoha={copyDoha} onShareDoha={shareDoha} />
 
                 {pi < parts.length - 1 && (
                   <div className="tp-part-sep">
@@ -674,6 +779,35 @@ export default function TeleprompterPage() {
       </div>
 
       <div className="tp-controls">
+
+        <div className="tp-reader-toolbar">
+          <button type="button" className="tp-reader-btn" onClick={() => stepFontSize(-1)} title="छोटा अक्षर" aria-label="Decrease font size">A−</button>
+          <button type="button" className="tp-reader-btn" onClick={() => stepFontSize(1)} title="बड़ा अक्षर" aria-label="Increase font size">A+</button>
+          <button type="button" className="tp-reader-btn" onClick={toggleFontFamily} title="फ़ॉन्ट बदलें">
+            {prefs.fontFamily === "standard" ? "कलात्मक" : "सामान्य"}
+          </button>
+          <button type="button" className="tp-reader-btn" onClick={cycleTheme} title="पठन थीम">
+            {themeLabel}
+          </button>
+          {showResume && hasBookmark && (
+            <button type="button" className="tp-reader-btn tp-reader-btn--resume" onClick={resumeReading}>
+              ↩ दोहा {prefs.lastDoha} से जारी
+            </button>
+          )}
+          {copyFeedback && <span className="tp-copy-feedback">{copyFeedback}</span>}
+        </div>
+
+        {activeIdx === 0 && (
+          <div className="tp-doha-progress" aria-label={`Reading progress: doha ${currentDohaNum} of ${TOTAL_DOHAS}`}>
+            <span className="tp-doha-progress__label">दोहा {currentDohaNum} / {TOTAL_DOHAS}</span>
+            <div className="tp-doha-progress__track">
+              <div
+                className="tp-doha-progress__fill"
+                style={{ width: `${(currentDohaNum / TOTAL_DOHAS) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSearch} className="tp-search-form">
           <input
