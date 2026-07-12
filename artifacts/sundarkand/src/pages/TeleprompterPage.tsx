@@ -68,7 +68,11 @@ function SundarkandBody({ body }: { body: Extract<PartBody, { kind: "sundarkand"
           </div>
           <div className="tp-doha-block">
             <div className="tp-doha-block__label">॥ दोहा {section.doha.number} ॥</div>
-            <div className="tp-doha-block__text">{section.doha.text}</div>
+            <div className="tp-doha-block__text">
+              {section.doha.text.split(",").map((line, i) => (
+                <div key={i}>{line.trim()}</div>
+              ))}
+            </div>
           </div>
         </div>
       ))}
@@ -86,18 +90,28 @@ function ChalisaBody({ body }: { body: Extract<PartBody, { kind: "chalisa" }> })
   return (
     <div className="tp-chalisa-verses">
       {body.verses.map((v, i) => {
-        const isDoha = v.startsWith("दोहा");
+        const isDoha = v.startsWith("दोहा:");
+        const isJai  = v.startsWith("॥");
         return (
-          <div key={i} data-section className={isDoha ? "tp-doha-block tp-doha-block--chalisa" : "tp-chaupai"}>
+          <div
+            key={i}
+            data-section
+            className={
+              isDoha ? "tp-doha-block tp-doha-block--chalisa" :
+              isJai  ? "tp-chalisa-jai" :
+              "tp-chaupai"
+            }
+          >
             {isDoha
-              ? <div className="tp-doha-block__text">{v}</div>
+              ? <div className="tp-doha-block__text">
+                  {v.replace(/^दोहा:\s*/, "").split(",").map((line, i) => (
+                    <div key={i}>{i === 0 ? "दोहा — " + line.trim() : line.trim()}</div>
+                  ))}
+                </div>
               : v}
           </div>
         );
       })}
-      <div className="tp-samapti__jay" style={{ marginTop: "2rem" }}>
-        ॥ श्री हनुमान चालीसा समाप्त ॥
-      </div>
     </div>
   );
 }
@@ -143,8 +157,13 @@ function PartContent({ part }: { part: Part }) {
   }
 }
 
+// The Sundarkand audio has a 36-second address/intro at the start.
+// Scrolling must NOT begin until the audio has passed this intro.
+const AUDIO_INTRO_SEC = 36;
+
 export default function TeleprompterPage() {
   const scrollRef          = useRef<HTMLDivElement>(null);
+  const audioRef           = useRef<HTMLAudioElement>(null);
   const startTimeRef       = useRef<number | null>(null);
   const posAtPauseRef      = useRef<number>(0);
   const rafRef             = useRef<number>(0);
@@ -153,6 +172,9 @@ export default function TeleprompterPage() {
   const dirRef             = useRef<1 | -1>(1);
   const manualScrollRef    = useRef(false);
   const manualTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks whether audio has passed the intro (36s) and scroll is unlocked
+  const scrollUnlockedRef  = useRef(false);
+  const [scrollUnlocked,   setScrollUnlocked]  = useState(false);
 
   const [playing,   setPlaying]   = useState(false);
   const [position,  setPosition]  = useState(0);
@@ -192,6 +214,25 @@ export default function TeleprompterPage() {
 
   const animate = useCallback(() => {
     if (startTimeRef.current === null) return;
+
+    // During the first AUDIO_INTRO_SEC seconds the audio plays an address.
+    // The scroll position stays at 0 and we do not advance the virtual timer
+    // until the audio has passed that intro window.
+    const audio = audioRef.current;
+    const inIntro = audio && audio.currentTime < AUDIO_INTRO_SEC;
+    if (inIntro) {
+      rafRef.current = requestAnimationFrame(animate);
+      return;
+    }
+
+    // Once we exit the intro, make sure the unlock flag is set once.
+    if (!scrollUnlockedRef.current) {
+      scrollUnlockedRef.current = true;
+      setScrollUnlocked(true);
+      // Re-anchor the start time so the scroll begins from 0 cleanly.
+      startTimeRef.current = performance.now();
+      posAtPauseRef.current = 0;
+    }
 
     const delta = (performance.now() - startTimeRef.current) * speedRef.current;
     const raw   = posAtPauseRef.current + delta * dirRef.current;
@@ -358,10 +399,28 @@ export default function TeleprompterPage() {
     }, 600);
   }, []);
 
-  const handlePlayPause = () => setPlaying(p => !p);
+  const handlePlayPause = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      if (!playing) {
+        audio.play().catch(() => {/* autoplay may be blocked — user gesture covers it */});
+      } else {
+        audio.pause();
+      }
+    }
+    setPlaying(p => !p);
+  };
 
   const handleReset = () => {
     cancelAnimationFrame(rafRef.current);
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    // Reset the intro lock so scroll waits again from the start
+    scrollUnlockedRef.current = false;
+    setScrollUnlocked(false);
     setPlaying(false);
     setPosition(0);
     setDirection(1);
@@ -377,6 +436,10 @@ export default function TeleprompterPage() {
     if (playing && startTimeRef.current !== null) {
       posAtPauseRef.current = positionRef.current;
       startTimeRef.current  = performance.now();
+    }
+    // Sync audio playback rate (clamped to browser-safe range 0.25–4.0)
+    if (audioRef.current) {
+      audioRef.current.playbackRate = Math.max(0.25, Math.min(4.0, s));
     }
     setSpeed(s);
     speedRef.current = s;
@@ -557,6 +620,20 @@ export default function TeleprompterPage() {
   return (
     <div className="tp-root">
 
+      {/* Hidden audio player – Sundarkand recitation */}
+      <audio
+        ref={audioRef}
+        src={`${import.meta.env.BASE_URL}sundarkand.mp3`}
+        preload="auto"
+      />
+
+      {/* Intro lock banner: shown while audio is in the 36-second address */}
+      {playing && !scrollUnlocked && (
+        <div className="tp-intro-banner">
+          🔔 प्रारंभिक उद्बोधन — स्क्रॉल 36 सेकंड बाद आरंभ होगा…
+        </div>
+      )}
+
       <div className="tp-border tp-border--top" style={{ borderColor: activePt.accentColor }}>
         <span className="tp-border__num" style={{ color: activePt.accentColor }}>{borderLabel}</span>
         <span className="tp-border__text">{borderText}</span>
@@ -578,18 +655,6 @@ export default function TeleprompterPage() {
                 ))
             }
           </div>
-        </div>
-
-        {/* Credits Section - Fixed to bottom right */}
-        <div className="tp-credits">
-          <img
-            src="/author.jpg"
-            alt="Rajkumar Arthuna"
-            className="tp-credits-photo"
-          />
-          <div className="tp-credits-title">An effort by humble Rambhakt-</div>
-          <div className="tp-credits-name">राजकुमार अरथुना</div>
-          <div className="tp-credits-message">🌺 🙏 सीताराम 🙏 🌺</div>
         </div>
 
         <div className="tp-scroll" ref={scrollRef}>
