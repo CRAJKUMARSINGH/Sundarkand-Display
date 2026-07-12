@@ -47,3 +47,19 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Large audio/media files (exceed GitHub 100MB limit)
+Audio/
+*.mp3
+*.m4a
+artifacts/sundarkand/public/sundarkand.mp3
+
+# Lyrics temp/generated files
+Lyrics/node_modules/
+Lyrics/package-lock.json
+Lyrics/package.json
+Lyrics/*.js
+Lyrics/weird_chars.txt
+Lyrics/char_samples.txt
+Lyrics/extract_out.txt
+Lyrics/sundarkand_extracted.txt
