@@ -808,6 +808,62 @@
 
   .no-default-active-elevate {}
 
+/* --- Audio player controls (per-part recitation) --- */
+.tp-audio-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.15rem;
+}
+.tp-audio-btn {
+  font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.7rem;
+  background: linear-gradient(135deg, #FF6B00, #D4A017);
+  border: 1px solid rgba(212,160,23,0.6);
+  color: #1a0a00;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.tp-audio-btn:hover { background: linear-gradient(135deg, #FF6B00, #D4A017); box-shadow: 0 2px 10px rgba(255,107,0,0.4); }
+.tp-audio-btn--muted { background: rgba(90,30,0,0.5); border-color: rgba(196,137,10,0.4); color: #F5E6A3; }
+.tp-audio-label { font-size: 0.72rem; color: #D4A017; letter-spacing: 0.03em; white-space: nowrap; }
+.tp-audio-volume {
+  -webkit-appearance: none;
+  width: 80px;
+  height: 3px;
+  background: rgba(196,137,10,0.3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.tp-audio-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #FF6B00;
+  cursor: pointer;
+}
+.tp-audio-volume::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #FF6B00;
+  border: none;
+  cursor: pointer;
+}
+.tp-audio-unavailable {
+  font-size: 0.72rem;
+  color: rgba(245,230,163,0.4);
+  font-style: italic;
+}
+
 
   /**
    * Toggleable backgrounds go behind the content. Hoverable/active goes on top.

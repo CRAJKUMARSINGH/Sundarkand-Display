@@ -7,6 +7,16 @@ import SceneBackdrop from "@/components/SceneBackdrop";
 import { useReaderPrefs, TOTAL_DOHAS } from "@/hooks/useReaderPrefs";
 import { sceneForDoha } from "@/data/scenes";
 
+// User-provided recitation audio, keyed by part id. Parts without a
+// recorded track (the two aartis, Bajrang Baan) simply have no audio.
+const AUDIO_SOURCES: Record<string, string | null> = {
+  sundarkand: `${import.meta.env.BASE_URL}audio/sundarkand-path.mp3`,
+  chalisa: `${import.meta.env.BASE_URL}audio/hanuman-chalisa.m4a`,
+  "hanuman-aarti": null,
+  "ram-aarti": null,
+  bajrangbaan: null,
+};
+
 function formatTime(ms: number) {
   const t = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(t / 3600);
@@ -203,6 +213,7 @@ export default function TeleprompterPage() {
   const dirRef             = useRef<1 | -1>(1);
   const manualScrollRef    = useRef(false);
   const manualTimerRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioRef           = useRef<HTMLAudioElement>(null);
 
   const [playing,   setPlaying]   = useState(false);
   const [position,  setPosition]  = useState(0);
@@ -215,6 +226,8 @@ export default function TeleprompterPage() {
   const [showResults,    setShowResults]    = useState(false);
   const [copyFeedback,   setCopyFeedback]   = useState("");
   const [showResume,     setShowResume]     = useState(false);
+  const [audioPlaying,   setAudioPlaying]   = useState(false);
+  const [volume,         setVolume]         = useState(0.85);
 
   const {
     prefs,
@@ -233,6 +246,29 @@ export default function TeleprompterPage() {
   const activePt  = parts[activeIdx];
   const partStart = partOffsets[activeIdx];
   const partElap  = Math.min(position - partStart, activePt.durationSec * 1000);
+  const audioSrc  = AUDIO_SOURCES[activePt.id] ?? null;
+
+  // Recitation audio: independent play/pause control, but the track is
+  // swapped automatically as the reader moves between parts, and playback
+  // pauses on parts with no recorded audio.
+  useEffect(() => {
+    const el = audioRef.current;
+    if (el) el.volume = volume;
+  }, [volume]);
+
+  useEffect(() => {
+    if (!audioSrc) setAudioPlaying(false);
+  }, [audioSrc]);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !audioSrc) return;
+    if (audioPlaying) {
+      el.play().catch(() => setAudioPlaying(false));
+    } else {
+      el.pause();
+    }
+  }, [audioPlaying, audioSrc]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -673,6 +709,8 @@ export default function TeleprompterPage() {
       className={`tp-root tp-theme--${prefs.theme} tp-font--${prefs.fontFamily}`}
       style={{ "--tp-text-scale": prefs.fontSize } as CSSProperties}
     >
+      {audioSrc && <audio ref={audioRef} src={audioSrc} onEnded={() => setAudioPlaying(false)} />}
+
       {activeIdx === 0 && <SceneBackdrop dohaNum={currentDohaNum} />}
 
       {activeIdx === 0 && (
@@ -793,6 +831,34 @@ export default function TeleprompterPage() {
       </div>
 
       <div className="tp-controls">
+
+        <div className="tp-audio-bar">
+          {audioSrc ? (
+            <>
+              <button
+                type="button"
+                className={`tp-audio-btn ${audioPlaying ? "" : "tp-audio-btn--muted"}`}
+                onClick={() => setAudioPlaying(p => !p)}
+                aria-label={audioPlaying ? "Pause recitation audio" : "Play recitation audio"}
+              >
+                {audioPlaying ? "⏸ पाठ रोकें" : "🔊 पाठ सुनें"}
+              </button>
+              <span className="tp-audio-label">{activePt.subtitle} पाठ</span>
+              <input
+                type="range"
+                className="tp-audio-volume"
+                min={0}
+                max={1}
+                step={0.05}
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                aria-label="Recitation volume"
+              />
+            </>
+          ) : (
+            <span className="tp-audio-unavailable">इस भाग के लिए ऑडियो उपलब्ध नहीं है</span>
+          )}
+        </div>
 
         <div className="tp-reader-toolbar">
           <button type="button" className="tp-reader-btn" onClick={() => stepFontSize(-1)} title="छोटा अक्षर" aria-label="Decrease font size">A−</button>
