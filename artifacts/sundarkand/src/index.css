@@ -688,6 +688,61 @@
   .tp-doha-actions       { opacity: 1; }
 }
 
+
+/* --- Sticky floating doha-progress pill (always visible while reading) --- */
+.tp-doha-pill {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  background: rgba(10, 6, 2, 0.72);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(212, 160, 23, 0.35);
+  border-radius: 0.55rem;
+  padding: 0.35rem 0.7rem 0.4rem;
+  min-width: 130px;
+  max-width: 220px;
+  pointer-events: none;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.55);
+}
+.tp-doha-pill__num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #D4A017;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.tp-doha-pill__scene {
+  font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif;
+  font-size: 0.68rem;
+  color: rgba(245, 230, 163, 0.80);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 210px;
+}
+.tp-doha-pill__bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(196,137,10,0.18);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.tp-doha-pill__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #C4890A, #FF6B00);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+/* night theme: slightly more transparent */
+.tp-theme--night .tp-doha-pill { background: rgba(6,4,1,0.80); }
+/* hide on small phones; optional — remove if you want it always on */
+@media (max-width: 480px) { .tp-doha-pill { display: none; } }
+
 /* --- Optional scene-sync narrative art (SceneBackdrop.tsx) --- */
 :root { --scene-fade-ms: 600ms; }
 

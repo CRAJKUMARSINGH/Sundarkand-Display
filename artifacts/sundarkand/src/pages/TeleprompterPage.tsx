@@ -5,6 +5,7 @@ import {
 } from "@/data/sundarkand";
 import SceneBackdrop from "@/components/SceneBackdrop";
 import { useReaderPrefs, TOTAL_DOHAS } from "@/hooks/useReaderPrefs";
+import { sceneForDoha } from "@/data/scenes";
 
 function formatTime(ms: number) {
   const t = Math.max(0, Math.floor(ms / 1000));
@@ -673,6 +674,19 @@ export default function TeleprompterPage() {
       style={{ "--tp-text-scale": prefs.fontSize } as CSSProperties}
     >
       {activeIdx === 0 && <SceneBackdrop dohaNum={currentDohaNum} />}
+
+      {activeIdx === 0 && (
+        <div className="tp-doha-pill" aria-live="polite" aria-atomic="true">
+          <span className="tp-doha-pill__num">दोहा {currentDohaNum} / {TOTAL_DOHAS}</span>
+          <span className="tp-doha-pill__scene">{sceneForDoha(currentDohaNum).captionHi}</span>
+          <div className="tp-doha-pill__bar">
+            <div
+              className="tp-doha-pill__fill"
+              style={{ width: `${Math.round((currentDohaNum / TOTAL_DOHAS) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="tp-border tp-border--top" style={{ borderColor: activePt.accentColor }}>
         <span className="tp-border__num" style={{ color: activePt.accentColor }}>{borderLabel}</span>
