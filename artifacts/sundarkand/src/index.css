@@ -749,17 +749,54 @@
 .tp-scene-backdrop {
   position: fixed;
   top: 0; right: 0;
-  width: min(22vw, 300px);
+  width: min(20vw, 280px);
   height: 100vh;
   overflow: hidden;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 .tp-scene-backdrop::after {
   content: "";
   position: absolute; inset: 0;
   background: linear-gradient(90deg, rgba(20,8,0,0.95) 0%, rgba(20,8,0,0.35) 45%, rgba(20,8,0,0.15) 100%);
+}
+.tp-scene-backdrop__images {
+  position: absolute; inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 0.8rem;
+}
+.tp-scene-backdrop__image-container {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: linear-gradient(135deg, #3A1200 0%, #5C1E00 50%, #3A1200 100%);
+  border: 3px solid #C4890A;
+  box-shadow: 0 4px 15px rgba(212,160,23,0.3);
+}
+.tp-scene-backdrop__image-container::before,
+.tp-scene-backdrop__image-container::after {
+  content: "🪔";
+  position: absolute;
+  font-size: 0.7rem;
+  opacity: 0.6;
+  z-index: 3;
+}
+.tp-scene-backdrop__image-container::before {
+  top: 0.3rem;
+  left: 0.3rem;
+}
+.tp-scene-backdrop__image-container::after {
+  top: 0.3rem;
+  right: 0.3rem;
+}
+.tp-scene-backdrop__image-container--left {
+  flex: 1;
+}
+.tp-scene-backdrop__image-container--right {
+  flex: 1;
 }
 .tp-scene-backdrop__img {
   position: absolute; inset: 0;
@@ -767,17 +804,22 @@
   object-fit: cover;
   filter: sepia(15%) saturate(85%);
 }
-.tp-scene-backdrop__img--current  { opacity: 1; transition: opacity var(--scene-fade-ms) ease; }
-.tp-scene-backdrop__img--incoming { opacity: 0; animation: tp-scene-fade-in var(--scene-fade-ms) ease forwards; }
-@keyframes tp-scene-fade-in { from { opacity: 0; } to { opacity: 1; } }
-
 .tp-scene-backdrop__caption {
-  position: absolute; left: 0.6rem; right: 0.6rem; bottom: 1rem;
-  display: flex; flex-direction: column; gap: 0.15rem;
+  position: absolute; left: 0.4rem; right: 0.4rem; bottom: 0.6rem;
+  display: flex; flex-direction: column; gap: 0.1rem;
   z-index: 2;
+  background: rgba(0,0,0,0.4);
+  padding: 0.3rem 0.4rem;
+  border-radius: 3px;
 }
-.tp-scene-backdrop__caption-hi { font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif; font-size: 0.85rem; color: #F5E6A3; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
-.tp-scene-backdrop__caption-en { font-size: 0.68rem; color: rgba(245,230,163,0.75); text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+.tp-scene-backdrop__caption--left {
+  bottom: 0.6rem;
+}
+.tp-scene-backdrop__caption--right {
+  bottom: 0.6rem;
+}
+.tp-scene-backdrop__caption-hi { font-family: "Tiro Devanagari Hindi", "Noto Sans Devanagari", serif; font-size: 0.7rem; color: #F5E6A3; text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1.2; }
+.tp-scene-backdrop__caption-en { font-size: 0.55rem; color: rgba(245,230,163,0.75); text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1.1; }
 
 @media (max-width: 900px) {
   .tp-scene-backdrop { display: none; } /* keep mobile focused on text; re-enable/redesign as a top banner if desired */
