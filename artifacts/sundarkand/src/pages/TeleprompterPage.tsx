@@ -12,9 +12,9 @@ import { sceneForDoha } from "@/data/scenes";
 const AUDIO_SOURCES: Record<string, string | null> = {
   sundarkand: `${import.meta.env.BASE_URL}audio/sundarkand-path.mp3`,
   chalisa: `${import.meta.env.BASE_URL}audio/hanuman-chalisa.m4a`,
-  "hanuman-aarti": null,
-  "ram-aarti": null,
-  bajrangbaan: null,
+  "hanuman-aarti": `${import.meta.env.BASE_URL}audio/hanuman-aarti.m4a`,
+  "ram-aarti": `${import.meta.env.BASE_URL}audio/ram-aarti.m4a`,
+  bajrangbaan: `${import.meta.env.BASE_URL}audio/bajrangbaan.m4a`,
 };
 
 function formatTime(ms: number) {
@@ -226,7 +226,7 @@ export default function TeleprompterPage() {
   const [showResults,    setShowResults]    = useState(false);
   const [copyFeedback,   setCopyFeedback]   = useState("");
   const [showResume,     setShowResume]     = useState(false);
-  const [audioPlaying,   setAudioPlaying]   = useState(false);
+  const [audioMuted,     setAudioMuted]     = useState(false);
   const [volume,         setVolume]         = useState(0.85);
 
   const {
@@ -248,27 +248,35 @@ export default function TeleprompterPage() {
   const partElap  = Math.min(position - partStart, activePt.durationSec * 1000);
   const audioSrc  = AUDIO_SOURCES[activePt.id] ?? null;
 
-  // Recitation audio: independent play/pause control, but the track is
-  // swapped automatically as the reader moves between parts, and playback
-  // pauses on parts with no recorded audio.
+  // Recitation audio: synchronized with the teleprompter's play/pause state.
   useEffect(() => {
     const el = audioRef.current;
-    if (el) el.volume = volume;
-  }, [volume]);
+    if (el) {
+      el.volume = volume;
+      el.muted = audioMuted;
+    }
+  }, [volume, audioMuted]);
 
   useEffect(() => {
-    if (!audioSrc) setAudioPlaying(false);
-  }, [audioSrc]);
+    const el = audioRef.current;
+    if (el) el.playbackRate = speed;
+  }, [speed]);
 
   useEffect(() => {
     const el = audioRef.current;
     if (!el || !audioSrc) return;
-    if (audioPlaying) {
-      el.play().catch(() => setAudioPlaying(false));
+    
+    // Sync time when track changes or play state changes
+    const activeIdx = activePart(positionRef.current);
+    const partStart = partOffsets[activeIdx];
+    el.currentTime = Math.max(0, (positionRef.current - partStart) / 1000);
+
+    if (playing) {
+      el.play().catch(console.error);
     } else {
       el.pause();
     }
-  }, [audioPlaying, audioSrc]);
+  }, [playing, audioSrc]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -394,6 +402,12 @@ export default function TeleprompterPage() {
         posAtPauseRef.current = newPos;
         positionRef.current   = newPos;
         setPosition(newPos);
+        
+        if (audioRef.current) {
+          const activeIdx = activePart(newPos);
+          audioRef.current.currentTime = Math.max(0, (newPos - partOffsets[activeIdx]) / 1000);
+        }
+
         if (startTimeRef.current !== null) {
           startTimeRef.current = performance.now();
         }
@@ -457,6 +471,12 @@ export default function TeleprompterPage() {
       posAtPauseRef.current = newPos;
       positionRef.current   = newPos;
       setPosition(newPos);
+      
+      if (audioRef.current) {
+        const activeIdx = activePart(newPos);
+        audioRef.current.currentTime = Math.max(0, (newPos - partOffsets[activeIdx]) / 1000);
+      }
+
       if (startTimeRef.current !== null) startTimeRef.current = performance.now();
     }, 600);
   }, []);
@@ -837,11 +857,11 @@ export default function TeleprompterPage() {
             <>
               <button
                 type="button"
-                className={`tp-audio-btn ${audioPlaying ? "" : "tp-audio-btn--muted"}`}
-                onClick={() => setAudioPlaying(p => !p)}
-                aria-label={audioPlaying ? "Pause recitation audio" : "Play recitation audio"}
+                className={`tp-audio-btn ${audioMuted ? "tp-audio-btn--muted" : ""}`}
+                onClick={() => setAudioMuted(m => !m)}
+                aria-label={audioMuted ? "Unmute audio" : "Mute audio"}
               >
-                {audioPlaying ? "⏸ पाठ रोकें" : "🔊 पाठ सुनें"}
+                {audioMuted ? "🔇 ऑडियो म्यूट" : "🔊 ऑडियो सुनें"}
               </button>
               <span className="tp-audio-label">{activePt.subtitle} पाठ</span>
               <input

@@ -42,7 +42,7 @@ const beats: Beat[] = [
     range: [1, 2],
     captionHi: "हनुमानजी का समुद्र-लंघन",
     captionEn: "Hanuman leaps across the ocean toward Lanka",
-    oldImage: "/scenes/scene_ocean_crossing_old.jpg",
+    oldImage: "/scenes/scene_ocean_crossing.jpg", // missing old, using new
     newImage: "/scenes/scene_ocean_crossing.jpg",
   },
   {
@@ -50,8 +50,8 @@ const beats: Beat[] = [
     range: [3, 11],
     captionHi: "रात्रि में लंका में प्रवेश",
     captionEn: "Entering Lanka by night",
-    oldImage: "/scenes/scene_lanka_gate_old.jpg",
-    newImage: "/scenes/scene_lanka_gate.jpg",
+    oldImage: "/scenes/scene_ocean_crossing.jpg", // both missing, using previous
+    newImage: "/scenes/scene_ashoka_grove_old.jpg", // using next available
   },
   {
     id: "ashoka-grove",
@@ -74,7 +74,7 @@ const beats: Beat[] = [
     range: [30, 40],
     captionHi: "रावण की सभा",
     captionEn: "The audience with Ravana",
-    oldImage: "/scenes/scene_ravana_court_old.jpg",
+    oldImage: "/scenes/scene_ravana_court.jpg", // missing old, using new
     newImage: "/scenes/scene_ravana_court.jpg",
   },
   {
@@ -83,14 +83,14 @@ const beats: Beat[] = [
     captionHi: "लंका दहन",
     captionEn: "The burning of Lanka",
     oldImage: "/scenes/scene_lanka_dahan_old.jpg",
-    newImage: "/scenes/scene_lanka_dahan.jpg",
+    newImage: "/scenes/scene_lanka_dahan_old.jpg", // missing new, using old
   },
   {
     id: "return-leap",
     range: [51, 58],
     captionHi: "समुद्र-पार वापसी",
     captionEn: "The return leap across the ocean",
-    oldImage: "/scenes/scene_return_leap_old.jpg",
+    oldImage: "/scenes/scene_return_leap.jpg", // missing old, using new
     newImage: "/scenes/scene_return_leap.jpg",
   },
   {
@@ -98,7 +98,7 @@ const beats: Beat[] = [
     range: [59, 60],
     captionHi: "श्रीराम से पुनर्मिलन",
     captionEn: "Reporting back to Rama and the vanar army",
-    oldImage: "/scenes/scene_reunion_old.jpg",
+    oldImage: "/scenes/scene_reunion.jpg", // missing old, using new
     newImage: "/scenes/scene_reunion.jpg",
   },
 ];
